@@ -63,11 +63,17 @@ def OnFrame(frame):
             "x": hand.palm.position.x,
             "y": hand.palm.position.y,
             "z": hand.palm.position.z,
-            "velocity_x": hand.palm.velocity.x, #millimeters per second
-            "velocity_y": hand.palm.velocity.y,
-            "velocity_z": hand.palm.velocity.z,
+            # "velocity_x": hand.palm.velocity.x, #millimeters per second
+            # "velocity_y": hand.palm.velocity.y,
+            # "velocity_z": hand.palm.velocity.z,
             "grab_strength": hand.grab_strength,
             "pinch_strength": hand.pinch_strength,
+            "orientation": {
+                "x": hand.palm.orientation.x,
+                "y": hand.palm.orientation.y,
+                "z": hand.palm.orientation.z,
+                "w": hand.palm.orientation.w
+            }
             
         }
         sock.sendto(json.dumps(data).encode(), target)
