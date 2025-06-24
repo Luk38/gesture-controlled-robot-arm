@@ -1,3 +1,11 @@
+# ### Build with:
+# 
+#     docker build -t deoxys_sim docker_deoxys_sim/
+#
+# ### Run with:
+#
+#    docker run -it --rm -v C:\Users\Lukas\gesture-controlled-robot-arm/workspace/gesture-controlled-robot-arm\ -e DISPLAY=$DISPLAY -v /tmp/.X11-unix:/tmp/.X11-unix --net=host --privileged deoxys_sim
+#
 FROM ros:noetic
 
 WORKDIR /root/
@@ -35,7 +43,7 @@ RUN cd deoxys_control/deoxys && \
 
 RUN wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh 
 RUN bash Miniconda3-latest-Linux-x86_64.sh -b && ./miniconda3/bin/conda init
-
+    
 RUN . ~/.bashrc && \
     conda create -n "deoxys" python=3.10 ipython ipykernel pylint jupyter pip pyzmq PyYAML easydict google-api-python-client pybullet numpy hidapi glfw numba termcolor simplejson mujoco protobuf==3.20.0 matplotlib h5py scipy -c conda-forge -y
 
@@ -50,7 +58,7 @@ RUN sed -i 's/IP: .*/IP: 127.0.0.1/g' deoxys_control/deoxys/config/charmander.ym
 RUN echo "conda activate deoxys" >> ~/.bashrc
 
 
-WORKDIR /root/deoxys_control/deoxys
+WORKDIR /workspace/gesture-controlled-robot-arm
 
 
 
