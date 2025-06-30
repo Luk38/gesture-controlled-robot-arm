@@ -1,3 +1,6 @@
+import sys
+sys.path.append("/usr/lib/ultraleap-hand-tracking-service")
+#sys.path.append(r"D:\Ultraleap\LeapSDK")
 import cffi
 from leapc_cffi import _leapc_cffi
 import threading
@@ -48,15 +51,6 @@ def OnFrame(frame):
         print("Frame: ", frame.info.frame_id, "with ", frame.nHands)
     for h in range(frame.nHands):
         hand = frame.pHands[h]
-        # print(
-        #     "    Hand id {} is a {} hand with position ({:.2f}, {:.2f}, {:.2f})".format(
-        #         hand.id,
-        #         "left" if hand.type == lib.eLeapHandType_Left else "right",
-        #         hand.palm.position.x,
-        #         hand.palm.position.y,
-        #         hand.palm.position.z
-        #     )
-        # )
         data = {
             "id": hand.id,
             "type": "left" if hand.type == lib.eLeapHandType_Left else "right",
