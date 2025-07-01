@@ -19,6 +19,17 @@ while True:
              )
         )
     
+    # # Palm orientation
+    # print(
+    #          "    Hand id {} orientation is ({:.2f}, {:.2f}, {:.2f}, {:.2f})".format(
+    #              hand_data["id"],
+    #              hand_data["orientation"]["x"],
+    #              hand_data["orientation"]["y"],
+    #              hand_data["orientation"]["z"],
+    #              hand_data["orientation"]["w"]
+    #          )
+    #     )
+
     # Palm velocity
     # print(
     #         " Hand id {} is moving {:.2f} mm/s in x direction," \
