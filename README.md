@@ -11,3 +11,6 @@ robot_control/get_hand_positions.py
 import sys
 sys.path.append("/usr/lib/ultraleap-hand-tracking-service")
 Unter Windows :C:\Program Files\Ultraleap\LeapSDK\lib\x64
+
+# Terminal im Container
+docker exec -it container_id /bin/bash

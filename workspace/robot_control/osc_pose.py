@@ -1,10 +1,9 @@
 import numpy as np
 import time
 from receive_hand_positions import receive_hand_positions
-from get_hand_positions import get_latest_hand_data
+#from get_hand_positions import get_latest_hand_data
 import robosuite as suite
 #import sys
-#sys.path.append("")
 #sys.path.append(r"C:\Users\Lukas\deoxys_control\deoxys")
 from deoxys.franka_interface import FrankaInterface
 from deoxys.utils import transform_utils
@@ -14,7 +13,7 @@ from deoxys.utils.config_utils import get_default_controller_config
 # Scales for the robot's end-effector
 X_POS_SCALE = 0.02  # Scale for robots x position
 Y_POS_SCALE = 0.02  # Scale for robots y position
-Z_POS_SCALE = 0.06  # Scale for robots z position
+Z_POS_SCALE = 0.006  # Scale for robots z position
 X_ROT_SCALE = -1  # Scale for robots x rotation
 Y_ROT_SCALE = 1  # Scale for robots y rotation   
 Z_ROT_SCALE = -1  # Scale for robots z rotation
@@ -103,12 +102,12 @@ def main():
 
     # Run Program on Real Robot
     elif (not simulation):
-        robot_interface = FrankaInterface("config/charmander.yml"
+        robot_interface = FrankaInterface("/deoxys/config/charmander.yml"
                                           , use_visualizer=False)
         controller_type = "OSC_POSE"
         controller_cfg = get_default_controller_config(controller_type)
 
-        robot_interface = FrankaInterface("config/charmander.yml"
+        robot_interface = FrankaInterface("/deoxys/config/charmander.yml"
                                           , use_visualizer=False)
         
         while True:
