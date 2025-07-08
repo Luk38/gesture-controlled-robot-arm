@@ -6,6 +6,9 @@ IP  = "127.0.0.1" #localhost
 PORT = 5005
 BUFFER_SIZE = 1024
 
+sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+sock.bind((ip, port))
+
 def receive_hand_positions(ip=IP, port=PORT, buffer_size=BUFFER_SIZE):
     """
     Generator function to receive hand positions from a UDP socket.
@@ -18,10 +21,12 @@ def receive_hand_positions(ip=IP, port=PORT, buffer_size=BUFFER_SIZE):
     returns:
         dict: Parsed hand data received from the socket.
     """
-    sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    sock.bind((ip, port))
 
-    while True:
-        data, addr = sock.recvfrom(buffer_size)
-        hand_data = json.loads(data.decode())
-        return hand_data
+    data, addr = sock.recvfrom(buffer_size)
+    hand_data = json.loads(data.decode())
+    return hand_data
+
+def close_connection():
+    
+    return sock.close()
+

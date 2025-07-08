@@ -1,7 +1,7 @@
 import sys
 sys.path.append("/usr/lib/ultraleap-hand-tracking-service")
 #sys.path.append(r"D:\Ultraleap\LeapSDK")
-import cffi
+#import cffi
 from leapc_cffi import _leapc_cffi
 import threading
 import socket
@@ -13,7 +13,7 @@ lib = _leapc_cffi.lib
 connectionHandle = ffi.new("LEAP_CONNECTION *")
 
 sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-target = ("127.0.0.1", 5005)  # target address and port
+target = ("127.0.0.1", 4999)  # target address and port
 
 def OpenConnection():
     global _isRunning
@@ -36,6 +36,7 @@ def CloseConnection():
 def DestroyConnection():
     CloseConnection()
     lib.LeapDestroyConnection(connectionHandle[0])
+    sock.close()
 
 
 IsConnected = False
