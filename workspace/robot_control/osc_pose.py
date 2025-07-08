@@ -1,6 +1,7 @@
 import numpy as np
 import time
 from receive_hand_positions import receive_hand_positions
+from get_hand_positions import get_latest_hand_data
 import robosuite as suite
 #import sys
 #sys.path.append("")
@@ -83,6 +84,7 @@ def main():
 
             # Hand tracking data
             hand_data = receive_hand_positions()
+            # hand_data = get_latest_hand_data()
             target_pose = get_target_pose(hand_data)
 
             # current pose
@@ -101,6 +103,8 @@ def main():
 
     # Run Program on Real Robot
     elif (not simulation):
+        robot_interface = FrankaInterface("config/charmander.yml"
+                                          , use_visualizer=False)
         controller_type = "OSC_POSE"
         controller_cfg = get_default_controller_config(controller_type)
 
@@ -113,8 +117,7 @@ def main():
             target_pose = get_target_pose(hand_data)
 
             # current pose
-            current_rot, current_pos = robot_interface.last_eef_rot_and_pos
-            current_quat = transform_utils.mat2quat(current_rot)
+            current_quat, current_pos = robot_interface.last_eef_quat_and_pos
 
             robot_interface.control(controller_type=controller_type,
                                     action=osc_move((current_pos, current_quat), target_pose),
