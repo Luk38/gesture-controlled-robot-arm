@@ -12,7 +12,11 @@ lib = _leapc_cffi.lib
 
 connectionHandle = ffi.new("LEAP_CONNECTION *")
 
+IP  = "127.0.0.1" 
+PORT = 4998
+
 sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+sock.bind(IP, PORT)
 target = ("127.0.0.1", 4999)  # target address and port
 
 def OpenConnection():
