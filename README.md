@@ -1,16 +1,48 @@
 # gesture-controlled-robot-arm
-# Auführen in workspace
+### Auführen in workspace
+
 python hand_tracking/hand_positions.py
+
 python robot_control/osc_pose.py 
+
 Über Socket
 
 robot_control/get_hand_positions.py
+
 Über getter Funktion
 
-# Für LeapC import
+### Für LeapC import
+
 import sys
+
 sys.path.append("/usr/lib/ultraleap-hand-tracking-service")
+
 Unter Windows :C:\Program Files\Ultraleap\LeapSDK\lib\x64
 
-# Terminal im Container
+## Docker
+
+### Terminal im Container
+
 docker exec -it container_id /bin/bash
+
+### Build with:
+
+docker build -t deoxys_gc docker_deoxys_gesture_control/
+
+### Run with:
+
+docker run -it -v /cshome:/cshome -e DISPLAY=$DISPLAY -v /tmp/.X11-unix:/tmp/.X11-unix --net=host --privileged deoxys_gc
+
+docker run -it --rm -v /cshome:/cshome -e DISPLAY=$DISPLAY -v /tmp/.X11-unix:/tmp/.X11-unix --net=host --privileged deoxys_gc
+
+## Panda
+
+### autoscripts
+
+./auto_scripts/auto_arm.sh config/charmander.yml
+
+./auto_scripts/auto_gripper.sh config/charmander.yml
+
+### example
+
+python examples/reset_robot_joints.py
