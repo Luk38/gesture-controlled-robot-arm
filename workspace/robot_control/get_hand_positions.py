@@ -1,6 +1,6 @@
 import sys
-sys.path.append("/usr/lib/ultraleap-hand-tracking-service")
-#sys.path.append(r"D:\Ultraleap\LeapSDK")
+#sys.path.append("/usr/lib/ultraleap-hand-tracking-service")
+sys.path.append(r"D:\Ultraleap\LeapSDK")
 from leapc_cffi import _leapc_cffi
 import threading
 import socket
@@ -45,6 +45,7 @@ def OnConnectionLost():
     print("Connection lost")
 
 def OnFrame(frame):
+    global latest_hand_data
     if (frame.info.frame_id % 60 == 0):
         print("Frame: ", frame.info.frame_id, "with ", frame.nHands)
     for h in range(frame.nHands):
@@ -78,7 +79,7 @@ def get_latest_hand_data():
         dict: The latest hand data or None if no data is available.
     """
     global latest_hand_data
-    return latest_hand_data if latest_hand_data else None
+    return latest_hand_data
 
 def handleConnectionEvent(connection_event):
     global IsConnected

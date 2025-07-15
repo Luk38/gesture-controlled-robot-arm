@@ -1,6 +1,6 @@
 import sys
-sys.path.append("/usr/lib/ultraleap-hand-tracking-service")
-#sys.path.append(r"D:\Ultraleap\LeapSDK")
+#sys.path.append("/usr/lib/ultraleap-hand-tracking-service")
+sys.path.append(r"D:\Ultraleap\LeapSDK")
 #import cffi
 from leapc_cffi import _leapc_cffi
 import threading
@@ -12,11 +12,7 @@ lib = _leapc_cffi.lib
 
 connectionHandle = ffi.new("LEAP_CONNECTION *")
 
-IP  = "127.0.0.1" 
-PORT = 4998
-
 sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-sock.bind(IP, PORT)
 target = ("127.0.0.1", 4999)  # target address and port
 
 def OpenConnection():
@@ -54,6 +50,9 @@ def OnConnectionLost():
 def OnFrame(frame):
     if (frame.info.frame_id % 60 == 0):
         print("Frame: ", frame.info.frame_id, "with ", frame.nHands)
+    # Sende nur jedes zweite Frame (bei 120Hz → 60Hz)
+    # if frame.info.frame_id % 2 != 0:
+    #     return
     for h in range(frame.nHands):
         hand = frame.pHands[h]
         data = {
@@ -127,3 +126,21 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+# import time
+
+# _last_send = 0
+# _SEND_INTERVAL = 1.0 / 60  # 60Hz
+
+# def OnFrame(frame):
+#     global _last_send
+#     now = time.time()
+#     if now - _last_send < _SEND_INTERVAL:
+#         return
+#     _last_send = now
+#     for h in range(frame.nHands):
+#         hand = frame.pHands[h]
+#         data = {
+#             # ... wie gehabt ...
+#         }
+#         sock.sendto(json.dumps(data).encode(), target)

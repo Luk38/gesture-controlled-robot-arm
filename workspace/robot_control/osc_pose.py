@@ -1,13 +1,12 @@
 import numpy as np
 import time
-from receive_hand_positions import receive_hand_positions
-#from get_hand_positions import get_latest_hand_data
+from receive_hand_positions import hand_position_stream
 import robosuite as suite
-#import sys
-#sys.path.append(r"C:\Users\Lukas\deoxys_control\deoxys")
-from deoxys.franka_interface import FrankaInterface
+import sys
+sys.path.append(r"C:\Users\Lukas\deoxys_control\deoxys")
+#from deoxys.franka_interface import FrankaInterface
 from deoxys.utils import transform_utils
-from deoxys.utils.config_utils import get_default_controller_config
+#from deoxys.utils.config_utils import get_default_controller_config
 
 # Constants
 # Scales for the robot's end-effector
@@ -20,7 +19,7 @@ Z_ROT_SCALE = -1  # Scale for robots z rotation
 
 # Simulation parameters
 MAX_FR = 60 # Maximum frame rate
-CONTROL_FREQ = 60  # Control frequency in Hz
+CONTROL_FREQ = 240  # Control frequency in Hz
 
 # Simulation or real robot mode
 simulation = True  # Set to False for real robot mode
@@ -63,14 +62,12 @@ def osc_move(current_pose, target_pose):
     action = action_pos.tolist() + action_axis_angle.tolist() + grasp.tolist()
     return action
 
-def main():    
-    # Run Program in Simulation
-    if(simulation):
-
-        # create environment instance
+def main():
+    if simulation:
+        hand_stream = hand_position_stream()
         env = suite.make(
-            env_name="Lift", 
-            robots="Panda",  
+            env_name="Lift",
+            robots="Panda",
             has_renderer=True,
             ignore_done=True,
             control_freq=CONTROL_FREQ,
@@ -81,9 +78,8 @@ def main():
         while True:
             start = time.time()
 
-            # Hand tracking data
-            hand_data = receive_hand_positions()
-            # hand_data = get_latest_hand_data()
+            # Hand tracking data (immer das neueste Paket)
+            hand_data = next(hand_stream)
             target_pose = get_target_pose(hand_data)
 
             # current pose
@@ -95,10 +91,10 @@ def main():
             obs, reward, done, info = env.step(action)
             env.render()
 
-            elapsed = time.time() - start
-            diff = 1 / MAX_FR - elapsed
-            if diff > 0:
-                time.sleep(diff)
+            # elapsed = time.time() - start
+            # diff = 1 / MAX_FR - elapsed
+            # if diff > 0:
+            #     time.sleep(diff)
 
     # Run Program on Real Robot
     elif (not simulation):
