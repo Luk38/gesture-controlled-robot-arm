@@ -3,10 +3,10 @@ import json
 
 #Default values for the IP, PORT, and BUFFER_SIZE
 IP  = "127.0.0.1" #localhost
-PORT = 4999
+PORT = 5005
 BUFFER_SIZE = 1024
 
-def hand_position_stream(ip=IP, port=PORT, buffer_size=BUFFER_SIZE):
+def receive_hand_positions(ip=IP, port=PORT, buffer_size=BUFFER_SIZE):
     """
     Generator function to receive hand positions from a UDP socket.
     
@@ -23,4 +23,4 @@ def hand_position_stream(ip=IP, port=PORT, buffer_size=BUFFER_SIZE):
     while True:
         data, addr = sock.recvfrom(buffer_size)
         hand_data = json.loads(data.decode())
-        yield hand_data
+        return hand_data
