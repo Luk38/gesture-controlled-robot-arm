@@ -27,13 +27,13 @@ docker exec -it container_id /bin/bash
 
 ### Build with:
 
-docker build -t deoxys_gc docker_deoxys_gesture_control/
+docker build -t deoxys docker_deoxys/
 
 ### Run with:
 
-docker run -it -v /cshome:/cshome -e DISPLAY=$DISPLAY -v /tmp/.X11-unix:/tmp/.X11-unix --net=host --privileged deoxys_gc
+docker run -it -v /cshome:/cshome -e DISPLAY=$DISPLAY -v /tmp/.X11-unix:/tmp/.X11-unix --net=host --privileged deoxys
 
-docker run -it --rm -v /cshome:/cshome -e DISPLAY=$DISPLAY -v /tmp/.X11-unix:/tmp/.X11-unix --net=host --privileged deoxys_gc
+docker run -it --rm -v /cshome:/cshome -e DISPLAY=$DISPLAY -v /tmp/.X11-unix:/tmp/.X11-unix --net=host --privileged deoxys
 
 ## Panda
 

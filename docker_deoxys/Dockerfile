@@ -1,10 +1,10 @@
 # ### Build with:
 # 
-#     docker build -t deoxys_sim docker_deoxys_sim/
+#     docker build -t deoxys docker_deoxys/
 #
 # ### Run with:
 #
-#    docker run -it --rm -v C:\Users\Lukas\gesture-controlled-robot-arm/workspace/gesture-controlled-robot-arm\ -e DISPLAY=$DISPLAY -v /tmp/.X11-unix:/tmp/.X11-unix --net=host --privileged deoxys_sim
+#    docker run -it --rm -v /cshome:/cshome -e DISPLAY=$DISPLAY -v /tmp/.X11-unix:/tmp/.X11-unix --net=host --privileged deoxys
 #
 FROM ros:noetic
 
@@ -26,7 +26,7 @@ RUN apt install git nano wget  -y
 
 RUN git clone https://github.com/UT-Austin-RPL/deoxys_control && \
     cd deoxys_control/deoxys && \
-    sed -i 's/read version/export version=0.8.0/g' ./InstallPackage && \
+    sed -i 's/read version/export version=0.9.2/g' ./InstallPackage && \
     bash ./InstallPackage
 
 RUN cd deoxys_control/deoxys && \
@@ -43,22 +43,23 @@ RUN cd deoxys_control/deoxys && \
 
 RUN wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh 
 RUN bash Miniconda3-latest-Linux-x86_64.sh -b && ./miniconda3/bin/conda init
-    
+ 
 RUN . ~/.bashrc && \
-    conda create -n "deoxys" python=3.10 ipython ipykernel pylint jupyter pip pyzmq PyYAML easydict google-api-python-client pybullet numpy hidapi glfw numba termcolor simplejson mujoco protobuf==3.20.0 matplotlib h5py scipy -c conda-forge -y
+    conda tos accept --override-channels --channel https://repo.anaconda.com/pkgs/main && \
+    conda tos accept --override-channels --channel https://repo.anaconda.com/pkgs/r && \
+    conda create -n "deoxys" python=3.8 ipython ipykernel pylint jupyter pip pyzmq PyYAML easydict google-api-python-client pybullet numpy hidapi glfw numba termcolor simplejson mujoco=3.1.0 protobuf==3.20.0 matplotlib h5py scipy -c conda-forge -y
 
 RUN . ~/.bashrc && \
-    conda activate deoxys && \
-    pip install robosuite
+    conda activate deoxys 
 
 # Change IP of NUC, as we run the NUC and deoxys code on the same device
-RUN sed -i 's/IP: .*/IP: 127.0.0.1/g' deoxys_control/deoxys/config/charmander.yml
+RUN sed -i 's/IP: 172.16.0.3/IP: 172.16.0.1/g' deoxys_control/deoxys/config/charmander.yml
 
 # Automatically activate the environment
 RUN echo "conda activate deoxys" >> ~/.bashrc
 
 
-WORKDIR /workspace/gesture-controlled-robot-arm
+WORKDIR /root/deoxys_control/deoxys
 
 
 
@@ -68,10 +69,7 @@ RUN apt-get update && apt-get install -y tmux
 # Add deoxys to pythonpath to enable local imports
 RUN echo "export PYTHONPATH=/root/deoxys_control/deoxys:$PYTHONPATH" >> ~/.bashrc
 
-ENV XDG_RUNTIME_DIR=/tmp/runtime-root
-RUN mkdir -p /tmp/runtime-root && chmod 700 /tmp/runtime-root
-
-#ENTRYPOINT tmux new-session -d -s deoxys_autostart \; \
- #          split-window -h './auto_scripts/auto_arm.sh config/charmander.yml' \; \
-  #         split-window -v './auto_scripts/auto_gripper.sh config/charmander.yml' \; \
-   #        attach
+# ENTRYPOINT tmux new-session -d -s deoxys_autostart \; \
+#           split-window -h './auto_scripts/auto_arm.sh config/charmander.yml' \; \
+#           split-window -v './auto_scripts/auto_gripper.sh config/charmander.yml' \; \
+#           attach

@@ -76,26 +76,32 @@ def main():
             use_camera_obs=False,
         )
         obs = env.reset()
-        while True:
-            start = time.time()
+        try:
+            while True:
+                start = time.time()
 
-            # Hand tracking data (immer das neueste Paket)
-            hand_data = receive_hand_positions()
-            target_pose = get_target_pose(hand_data)
+                # Hand tracking data (immer das neueste Paket)
+                hand_data = receive_hand_positions()
+                target_pose = get_target_pose(hand_data)
 
-            # current pose
-            current_pos = obs["robot0_eef_pos"]
-            current_quat = obs["robot0_eef_quat"]
+                # current pose
+                current_pos = obs["robot0_eef_pos"]
+                current_quat = obs["robot0_eef_quat"]
 
-            action = osc_move((current_pos, current_quat), target_pose)
+                action = osc_move((current_pos, current_quat), target_pose)
 
-            obs, reward, done, info = env.step(action)
-            env.render()
+                obs, reward, done, info = env.step(action)
+                env.render()
 
-            elapsed = time.time() - start
-            diff = 1 / MAX_FR - elapsed
-            if diff > 0:
-                time.sleep(diff)
+                elapsed = time.time() - start
+                diff = 1 / MAX_FR - elapsed
+                if diff > 0:
+                    time.sleep(diff)
+        except KeyboardInterrupt:
+            print("Simulation stopped by user.")
+        finally:
+            print("Closing simulation environment.")
+            env.close()
 
     # Run Program on Real Robot
     elif (not simulation):
@@ -121,19 +127,24 @@ def main():
         # current_quat = transform_utils.mat2quat(current_rot)
         # current_axis_angle = transform_utils.quat2axisangle(current_quat)
         # print(current_pos, current_quat)
-        while True:
-            # Hand tracking data
-            hand_data = receive_hand_positions()
-            target_pose = get_target_pose(hand_data)
+        try:
+            while True:
+                # Hand tracking data
+                hand_data = receive_hand_positions()
+                target_pose = get_target_pose(hand_data)
 
-            # current pose
-            current_quat, current_pos = robot_interface.last_eef_quat_and_pos
+                # current pose
+                current_quat, current_pos = robot_interface.last_eef_quat_and_pos
 
-            robot_interface.control(controller_type=controller_type,
-                                    action=osc_move((current_pos, current_quat), target_pose),
-                                    controller_cfg=controller_cfg,
-                                   )
-        robot_interface.close()
+                robot_interface.control(controller_type=controller_type,
+                                        action=osc_move((current_pos, current_quat), target_pose),
+                                        controller_cfg=controller_cfg,
+                                    )
+        except KeyboardInterrupt:
+            print("Program stopped by user.")
+        finally:
+            print("Closing robot interface.")
+            robot_interface.close()
 
 
 
