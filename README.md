@@ -46,3 +46,10 @@ docker run -it --rm -v /cshome:/cshome -e DISPLAY=$DISPLAY -v /tmp/.X11-unix:/tm
 ### example
 
 python examples/reset_robot_joints.py
+
+### Notizen
+Position:
+Panda x Richtung nach unten,
+y nach links, z nach hinten
+
+Rotation:
