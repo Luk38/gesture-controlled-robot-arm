@@ -23,7 +23,7 @@ Unter Windows :C:\Program Files\Ultraleap\LeapSDK\lib\x64
 
 ### Terminal im Container
 
-docker exec -it container_id /bin/bash
+docker exec -it 1900ac99c53f /bin/bash
 
 ### Build with:
 
@@ -48,8 +48,8 @@ docker run -it --rm -v /cshome:/cshome -e DISPLAY=$DISPLAY -v /tmp/.X11-unix:/tm
 python examples/reset_robot_joints.py
 
 ### Notizen
-Position:
+Position (von meiner Blickrichtung):
 Panda x Richtung nach unten,
-y nach links, z nach hinten
+y nach rechts, z nach hinten
 
 Rotation:

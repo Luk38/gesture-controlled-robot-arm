@@ -12,9 +12,9 @@ from deoxys.experimental.motion_utils import reset_joints_to
 
 # Constants
 # Scales for the robot's end-effector
-X_POS_SCALE = 0.02  # Scale for robots x position
-Y_POS_SCALE = 0.02  # Scale for robots y position
-Z_POS_SCALE = 0.006  # Scale for robots z position
+X_POS_SCALE = -0.01  # Scale for robots x position
+Y_POS_SCALE = -0.003  # Scale for robots y position
+Z_POS_SCALE = 0.002  # Scale for robots z position
 X_ROT_SCALE = -1  # Scale for robots x rotation
 Y_ROT_SCALE = 1  # Scale for robots y rotation   
 Z_ROT_SCALE = -1  # Scale for robots z rotation
@@ -44,15 +44,21 @@ def get_target_pose(hand_data):
 
 def osc_move(current_pose, target_pose):
     target_pos, target_quat, grasp = target_pose
-    current_pos, current_quat = current_pose
+    target_pos = target_pos.reshape((3, 1))
+    current_pos = current_pose[:3, 3:]
+    current_rot = current_pose[:3, :3]
+    current_quat = transform_utils.mat2quat(current_rot)
     if np.dot(target_quat, current_quat) < 0.0:
         current_quat = -current_quat
     quat_diff = transform_utils.quat_distance(target_quat, current_quat)
     axis_angle_diff = transform_utils.quat2axisangle(quat_diff)
 
     action_pos = (target_pos - current_pos).flatten()
+    print("target_pos:", target_pos)
+    print("current_pos:", current_pos)
+    print("action_pos:", action_pos)
     action_axis_angle = axis_angle_diff.flatten()
-    action_pos = np.clip(action_pos, -0.1, 0.1)
+    action_pos = np.clip(action_pos, -1, 1)
     action_axis_angle = np.clip(action_axis_angle, -0.002, 0.002)
 
     # gripper
@@ -134,12 +140,15 @@ def main():
                 target_pose = get_target_pose(hand_data)
 
                 # current pose
-                current_quat, current_pos = robot_interface.last_eef_quat_and_pos
+                current_pose = robot_interface.last_eef_pose
 
                 robot_interface.control(controller_type=controller_type,
-                                        action=osc_move((current_pos, current_quat), target_pose),
+                                        action=osc_move(current_pose, target_pose),
                                         controller_cfg=controller_cfg,
                                     )
+                target_pos, target_quat, grasp = target_pose
+                # print("target_pos:", target_pos)
+                # print("current_pos:", current_pose[:3, 3:])
         except KeyboardInterrupt:
             print("Program stopped by user.")
         finally:
