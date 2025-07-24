@@ -10,28 +10,53 @@ from deoxys.utils.config_utils import get_default_controller_config
 from deoxys.experimental.motion_utils import reset_joints_to
 
 
-# Constants
-# Scales for the robot's end-effector
-X_POS_SCALE = -0.01  # Scale for robots x position
-Y_POS_SCALE = -0.003  # Scale for robots y position
-Z_POS_SCALE = 0.002  # Scale for robots z position
-X_ROT_SCALE = -1  # Scale for robots x rotation
-Y_ROT_SCALE = 1  # Scale for robots y rotation   
-Z_ROT_SCALE = -1  # Scale for robots z rotation
-
-# Simulation parameters
-MAX_FR = 60 # Maximum frame rate
-CONTROL_FREQ = 60 # Control frequency in Hz
-
 # Simulation or real robot mode
 simulation = False # Set to False for real robot mode
 
+# Real robot
+if not simulation:
+    # Scales for the robot's end-effector
+    X_POS_SCALE = -0.01  # Scale for robots x position
+    Y_POS_SCALE = 0.004  # Scale for robots y position
+    Z_POS_SCALE = 0.004  # Scale for robots z position
+    X_ROT_SCALE = -1  # Scale for robots x rotation
+    Y_ROT_SCALE = 1  # Scale for robots y rotation   
+    Z_ROT_SCALE = -1  # Scale for robots z rotation
+    Z_OFFSET = -0.4  #z-axis offset for the robot
+
+# Simulation
+elif simulation:
+    X_POS_SCALE = -0.02  # Scale for robots x position
+    Y_POS_SCALE = 0.03  # Scale for robots y position
+    Z_POS_SCALE = 0.006  # Scale for robots z position
+    X_ROT_SCALE = -1  # Scale for robots x rotation
+    Y_ROT_SCALE = 1  # Scale for robots y rotation   
+    Z_ROT_SCALE = -1  # Scale for robots z rotation
+
+    # Simulation parameters
+    MAX_FR = 60 # Maximum frame rate
+    CONTROL_FREQ = 60 # Control frequency in Hz
+
+# MIN_HAND_Z = 0.19 # lowest z position of the hand to trigger virtual z offset
+# VIRTUAL_Z_STEP = -0.003  # how much to move down per cycle when at the limit
+
+# global virtual_z_offset
+# virtual_z_offset = -0.2
+
 def get_target_pose(hand_data):
     """Convert hand tracking data to target pose for the robot."""
+    # if not simulation:
+    #     global virtual_z_offset
+    #     hand_z = hand_data['y'] * Z_POS_SCALE  
+    #     if hand_z <= MIN_HAND_Z:
+    #         virtual_z_offset += VIRTUAL_Z_STEP
+    #     else:
+    #         virtual_z_offset = 0.0
+
     target_pos = np.array([
         hand_data['z'] * X_POS_SCALE,
         hand_data['x'] * Y_POS_SCALE,
-        hand_data['y'] * Z_POS_SCALE,
+        (hand_data['y'] * Z_POS_SCALE) + Z_OFFSET,
     ])
     target_quat = np.array([
         hand_data['orientation']['w'],
@@ -40,34 +65,44 @@ def get_target_pose(hand_data):
         hand_data['orientation']['z'] * Z_ROT_SCALE
     ])
     grasp = np.array([hand_data['pinch_strength']])
+    #print("target_pos_z:", target_pos[2])
     return target_pos, target_quat, grasp
 
 def osc_move(current_pose, target_pose):
-    target_pos, target_quat, grasp = target_pose
-    target_pos = target_pos.reshape((3, 1))
-    current_pos = current_pose[:3, 3:]
-    current_rot = current_pose[:3, :3]
-    current_quat = transform_utils.mat2quat(current_rot)
+    if simulation:
+        target_pos, target_quat, grasp = target_pose
+        current_pos, current_quat = current_pose
+    elif not simulation:
+        target_pos, target_quat, grasp = target_pose
+        target_pos = target_pos.reshape((3, 1))
+        current_pos = current_pose[:3, 3:]
+        current_rot = current_pose[:3, :3]
+        current_quat = transform_utils.mat2quat(current_rot)
     if np.dot(target_quat, current_quat) < 0.0:
         current_quat = -current_quat
     quat_diff = transform_utils.quat_distance(target_quat, current_quat)
     axis_angle_diff = transform_utils.quat2axisangle(quat_diff)
 
-    action_pos = (target_pos - current_pos).flatten()
+    action_pos = (target_pos - current_pos).flatten() 
     print("target_pos:", target_pos)
     print("current_pos:", current_pos)
     print("action_pos:", action_pos)
+    # print("target_quat:", target_quat)
+    # print("current_quat:", current_quat)
     action_axis_angle = axis_angle_diff.flatten()
-    action_pos = np.clip(action_pos, -1, 1)
-    action_axis_angle = np.clip(action_axis_angle, -0.002, 0.002)
+    # print("action_axis_angle:", action_axis_angle)
+    # action_pos = np.clip(action_pos, -1, 1)
+    # action_axis_angle = np.clip(action_axis_angle, -0.5, 0.5)
 
     # gripper
     if grasp == 0:
         grasp = np.array([-1.0])
 
+    #action_pos.tolist()
     #action_axis_angle.tolist()
     #np.array([0.0, 0, 0]).tolist()
-    action = action_pos.tolist() + np.array([0, 0, 0]).tolist() + grasp.tolist()
+    action = action_pos.tolist() + action_axis_angle.tolist() + grasp.tolist()
+    #print("action:", action)
     return action
 
 def main():
@@ -136,6 +171,7 @@ def main():
         try:
             while True:
                 # Hand tracking data
+                
                 hand_data = receive_hand_positions()
                 target_pose = get_target_pose(hand_data)
 
