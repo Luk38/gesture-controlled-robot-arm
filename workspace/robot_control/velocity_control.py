@@ -13,6 +13,11 @@ from deoxys.experimental.motion_utils import reset_joints_to
 # Simulation or real robot mode
 simulation = False # Set to False for real robot mode
 
+# Limits for hand tracker
+INNER_X_LIMIT = 50.0
+INNER_Z_MIN = -90.0
+INNER_Z_MAX = 45.0
+
 # Real robot
 if not simulation:
     # Scales for the robot's end-effector
@@ -23,10 +28,6 @@ if not simulation:
     Y_ROT_SCALE = 1  # Scale for robots y rotation   
     Z_ROT_SCALE = -1  # Scale for robots z rotation
     Z_OFFSET = -0.4  #z-axis offset for the robot
-
-    INNER_X_LIMIT = 50
-    INNER_Z_MIN = -100
-    INNER_Z_MAX = 40
 
 # Simulation
 elif simulation:
@@ -95,16 +96,26 @@ def osc_move(current_pose, target_pose):
     return action
 
 def velocity_move(hand_data):
-    v_max = 0.05
-    vx = 0.05 * np.abs(hand_data['x'] - INNER_X_LIMIT)
+    v_max = 0.1
+    scale = 0.001
+    if hand_data['x'] < -INNER_X_LIMIT:
+        vx = (hand_data['x'] + INNER_X_LIMIT) * scale
+    elif hand_data['x'] > INNER_X_LIMIT:
+        vx = (hand_data['x'] - INNER_X_LIMIT) * scale
+    else:
+        vx = 0
+
     if hand_data['z'] < INNER_Z_MIN:
-        vz = 0.05 * np.abs(hand_data['z'] - INNER_Z_MIN)
+        vz = (hand_data['z'] - INNER_Z_MIN) * scale
     elif hand_data['z'] > INNER_Z_MAX:
-        vz = 0.05 * np.abs(hand_data['z'] - INNER_Z_MAX)
+        vz = (hand_data['z'] - INNER_Z_MAX) * scale
+    else:
+        vz = 0
+
     vx = np.clip(vx, -v_max, v_max)
     vz = np.clip(vz, -v_max, v_max)
 
-    action = [vz, vx, 0, 0, 0, 0] + [-1]
+    action = [-vz, -vx, 0.0, 0.0, 0.0, 0.0] + [-1]
     return action
 
 def inner_area(robot_interface, target_pose):
@@ -119,13 +130,13 @@ def inner_area(robot_interface, target_pose):
                             )
     
 def outer_area(robot_interface, hand_data):
-    controller_type = "Cartesian_Velocity"
+    controller_type = "CARTESIAN_VELOCITY"
     controller_cfg = get_default_controller_config(controller_type)
 
-    # robot_interface.control(controller_type=controller_type,
-    #                         action=velocity_move(hand_data),
-    #                         controller_cfg=controller_cfg,
-    #                         )
+    robot_interface.control(controller_type=controller_type,
+                            action=velocity_move(hand_data),
+                            controller_cfg=controller_cfg,
+                            )
 
 
 def main():
