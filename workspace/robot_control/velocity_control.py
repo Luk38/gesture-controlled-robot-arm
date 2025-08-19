@@ -6,7 +6,7 @@ import robosuite as suite
 #sys.path.append(r"C:\Users\Lukas\deoxys_control\deoxys")
 from deoxys.franka_interface import FrankaInterface
 from deoxys.utils import transform_utils
-from deoxys.utils.config_utils import get_default_controller_config
+from deoxys.utils.config_utils import get_default_controller_config, verify_controller_config
 from deoxys.experimental.motion_utils import reset_joints_to
 
 
@@ -24,6 +24,10 @@ if not simulation:
     Z_ROT_SCALE = -1  # Scale for robots z rotation
     Z_OFFSET = -0.4  #z-axis offset for the robot
 
+    INNER_X_LIMIT = 50
+    INNER_Z_MIN = -100
+    INNER_Z_MAX = 40
+
 # Simulation
 elif simulation:
     X_POS_SCALE = -0.02  # Scale for robots x position
@@ -37,22 +41,14 @@ elif simulation:
     MAX_FR = 60 # Maximum frame rate
     CONTROL_FREQ = 60 # Control frequency in Hz
 
-# MIN_HAND_Z = 0.19 # lowest z position of the hand to trigger virtual z offset
-# VIRTUAL_Z_STEP = -0.003  # how much to move down per cycle when at the limit
-
-# global virtual_z_offset
-# virtual_z_offset = -0.2
+def check_hand_data(hand_data):
+    if -INNER_X_LIMIT < hand_data['x'] < INNER_X_LIMIT and INNER_Z_MIN < hand_data['z'] < INNER_Z_MAX:
+        return "inner"
+    else:
+        return "outer"
 
 def get_target_pose(hand_data):
     """Convert hand tracking data to target pose for the robot."""
-    # if not simulation:
-    #     global virtual_z_offset
-    #     hand_z = hand_data['y'] * Z_POS_SCALE  
-    #     if hand_z <= MIN_HAND_Z:
-    #         virtual_z_offset += VIRTUAL_Z_STEP
-    #     else:
-    #         virtual_z_offset = 0.0
-
     target_pos = np.array([
         hand_data['z'] * X_POS_SCALE,
         hand_data['x'] * Y_POS_SCALE,
@@ -65,7 +61,6 @@ def get_target_pose(hand_data):
         hand_data['orientation']['z'] * Z_ROT_SCALE
     ])
     grasp = np.array([hand_data['pinch_strength']])
-    #print("target_pos_z:", target_pos[2])
     return target_pos, target_quat, grasp
 
 def osc_move(current_pose, target_pose):
@@ -83,14 +78,8 @@ def osc_move(current_pose, target_pose):
     quat_diff = transform_utils.quat_distance(target_quat, current_quat)
     axis_angle_diff = transform_utils.quat2axisangle(quat_diff)
 
-    action_pos = (target_pos - current_pos).flatten() 
-    print("target_pos:", target_pos)
-    print("current_pos:", current_pos)
-    print("action_pos:", action_pos)
-    # print("target_quat:", target_quat)
-    # print("current_quat:", current_quat)
+    action_pos = (target_pos - current_pos).flatten()
     action_axis_angle = axis_angle_diff.flatten()
-    # print("action_axis_angle:", action_axis_angle)
     # action_pos = np.clip(action_pos, -1, 1)
     # action_axis_angle = np.clip(action_axis_angle, -0.5, 0.5)
 
@@ -104,6 +93,40 @@ def osc_move(current_pose, target_pose):
     action = action_pos.tolist() + action_axis_angle.tolist() + grasp.tolist()
     #print("action:", action)
     return action
+
+def velocity_move(hand_data):
+    v_max = 0.05
+    vx = 0.05 * np.abs(hand_data['x'] - INNER_X_LIMIT)
+    if hand_data['z'] < INNER_Z_MIN:
+        vz = 0.05 * np.abs(hand_data['z'] - INNER_Z_MIN)
+    elif hand_data['z'] > INNER_Z_MAX:
+        vz = 0.05 * np.abs(hand_data['z'] - INNER_Z_MAX)
+    vx = np.clip(vx, -v_max, v_max)
+    vz = np.clip(vz, -v_max, v_max)
+
+    action = [vz, vx, 0, 0, 0, 0] + [-1]
+    return action
+
+def inner_area(robot_interface, target_pose):
+    controller_type = "OSC_POSE"
+    controller_cfg = get_default_controller_config(controller_type)
+    # current pose
+    current_pose = robot_interface.last_eef_pose
+
+    robot_interface.control(controller_type=controller_type,
+                            action=osc_move(current_pose, target_pose),
+                            controller_cfg=controller_cfg,
+                            )
+    
+def outer_area(robot_interface, hand_data):
+    controller_type = "Cartesian_Velocity"
+    controller_cfg = get_default_controller_config(controller_type)
+
+    # robot_interface.control(controller_type=controller_type,
+    #                         action=velocity_move(hand_data),
+    #                         controller_cfg=controller_cfg,
+    #                         )
+
 
 def main():
     if simulation:
@@ -148,8 +171,6 @@ def main():
     elif (not simulation):
         robot_interface = FrankaInterface("config/charmander.yml"
                                           , use_visualizer=False)
-        controller_type = "OSC_POSE"
-        controller_cfg = get_default_controller_config(controller_type)
 
         reset_joint_positions = [
         0.09162008114028396,
@@ -162,29 +183,16 @@ def main():
         ]
 
         reset_joints_to(robot_interface, reset_joint_positions)
-        # current_ee_pose = robot_interface.last_eef_pose
-        # current_pos = current_ee_pose[:3, 3:]
-        # current_rot = current_ee_pose[:3, :3]
-        # current_quat = transform_utils.mat2quat(current_rot)
-        # current_axis_angle = transform_utils.quat2axisangle(current_quat)
-        # print(current_pos, current_quat)
+
         try:
             while True:
-                # Hand tracking data
-                
                 hand_data = receive_hand_positions()
                 target_pose = get_target_pose(hand_data)
-
-                # current pose
-                current_pose = robot_interface.last_eef_pose
-
-                robot_interface.control(controller_type=controller_type,
-                                        action=osc_move(current_pose, target_pose),
-                                        controller_cfg=controller_cfg,
-                                    )
-                target_pos, target_quat, grasp = target_pose
-                # print("target_pos:", target_pos)
-                # print("current_pos:", current_pose[:3, 3:])
+                area = check_hand_data(hand_data)
+                if area == "inner":
+                    inner_area(robot_interface, target_pose)
+                if area == "outer":
+                    outer_area(robot_interface, hand_data)
         except KeyboardInterrupt:
             print("Program stopped by user.")
         finally:
