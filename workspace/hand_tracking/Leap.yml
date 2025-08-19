@@ -1,0 +1,10 @@
+name: leap
+
+scales:
+  x_pos: -0.01
+  y_pos: 0.004
+  z_pos: 0.004
+  x_rot: -1
+  y_rot: 1
+  z_rot: -1
+  z_offset: -0.4
