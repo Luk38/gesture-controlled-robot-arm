@@ -2,6 +2,8 @@ import numpy as np
 import time
 from receive_hand_positions import receive_hand_positions
 import robosuite as suite
+#import sys
+#sys.path.append(r"C:\Users\Lukas\deoxys_control\deoxys")
 from deoxys.franka_interface import FrankaInterface
 from deoxys.utils import transform_utils
 from deoxys.utils.config_utils import get_default_controller_config
@@ -14,24 +16,24 @@ simulation = False # Set to False for real robot mode
 # Real robot
 if not simulation:
     # Scales for the robot's end-effector
-    X_POS_SCALE = 0.009  # Scale for robots x position
-    Y_POS_SCALE = 0.004  # Scale for robots y position
+    X_POS_SCALE = -0.01  # Scale for robots x position
+    Y_POS_SCALE = -0.005  # Scale for robots y position
     Z_POS_SCALE = 0.004  # Scale for robots z position
-    X_ROT_SCALE = -1  # Scale for robots x rotation
-    Y_ROT_SCALE = -1  # Scale for robots y rotation   
-    Z_ROT_SCALE = -1  # Scale for robots z rotation
-    X_OFFSET = 0.6  # x-axis offset for the robot
+    X_ROT_SCALE = 1  # Scale for robots x rotation
+    Y_ROT_SCALE = 1  # Scale for robots y rotation   
+    Z_ROT_SCALE = 1  # Scale for robots z rotation
+    X_OFFSET = 0  # x-axis offset for the robot
     Y_OFFSET = -0.02  # y-axis offset for the robot
     Z_OFFSET = -0.4  # z-axis offset for the robot
 
 # Simulation
 elif simulation:
-    X_POS_SCALE = 0.02  # Scale for robots x position
-    Y_POS_SCALE = 0.03  # Scale for robots y position
+    X_POS_SCALE = -0.02  # Scale for robots x position
+    Y_POS_SCALE = -0.03  # Scale for robots y position
     Z_POS_SCALE = 0.006  # Scale for robots z position
-    X_ROT_SCALE = -1  # Scale for robots x rotation
+    X_ROT_SCALE = 1  # Scale for robots x rotation
     Y_ROT_SCALE = 1  # Scale for robots y rotation   
-    Z_ROT_SCALE = -1  # Scale for robots z rotation
+    Z_ROT_SCALE = 1  # Scale for robots z rotation
     X_OFFSET = 0  # x-axis offset for the robot
     Y_OFFSET = 0  # y-axis offset for the robot
     Z_OFFSET = 0  # z-axis offset for the robot
@@ -40,9 +42,9 @@ elif simulation:
     MAX_FR = 60 # Maximum frame rate
     CONTROL_FREQ = 60 # Control frequency in Hz
 
-
 def get_target_pose(hand_data):
     """Convert hand tracking data to target pose for the robot."""
+
     target_pos = np.array([
         (hand_data['z'] * X_POS_SCALE) + X_OFFSET,
         (hand_data['x'] * Y_POS_SCALE) + Y_OFFSET,
@@ -73,10 +75,10 @@ def osc_move(current_pose, target_pose):
     quat_diff = transform_utils.quat_distance(target_quat, current_quat)
     axis_angle_diff = transform_utils.quat2axisangle(quat_diff)
 
-    action_pos = (target_pos - current_pos).flatten() 
-    print("target_pos:", target_pos)
-    print("current_pos:", current_pos)
+    action_pos = (target_pos - current_pos).flatten()
     print("action_pos:", action_pos)
+    # print("target_quat:", target_quat)
+    # print("current_quat:", current_quat)
     action_axis_angle = axis_angle_diff.flatten()
     # print("action_axis_angle:", action_axis_angle)
     # action_pos = np.clip(action_pos, -1, 1)
@@ -152,7 +154,7 @@ def main():
         reset_joints_to(robot_interface, reset_joint_positions)
         try:
             while True:
-                # Hand tracking data              
+                # Hand tracking data
                 hand_data = receive_hand_positions()
                 target_pose = get_target_pose(hand_data)
 
@@ -164,8 +166,9 @@ def main():
                                         controller_cfg=controller_cfg,
                                     )
                 target_pos, target_quat, grasp = target_pose
-                # print("target_pos:", target_pos)
-                # print("current_pos:", current_pose[:3, 3:])
+                print("hand_data", np.array([hand_data['x'], hand_data['y'], hand_data['z']]).flatten())
+                print("target_pos:", target_pos)
+                print("current_pos:", current_pose[:3, 3:].flatten())
         except KeyboardInterrupt:
             print("Program stopped by user.")
         finally:
