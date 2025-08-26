@@ -18,6 +18,17 @@ X_ROT_SCALE = 0.1
 Y_ROT_SCALE = 0.02
 Z_ROT_SCALE = 0.02
 
+def smooth_velocity(current_velocity, target_velocity, alpha=0.5):
+    v_smoothed = alpha * target_velocity + (1 - alpha) * current_velocity #exponential smoothing
+    return v_smoothed
+
+def acceleration_limiter(current_velocity, target_velocity, max_acceleration=0.01):
+    delta_v = target_velocity - current_velocity
+    delta_v = np.clip(delta_v, -max_acceleration, max_acceleration)
+    return current_velocity + delta_v
+
+# jerk limiter
+
 def velocity_move(hand_data):
     v_max = 0.1
     scale = 0.0004

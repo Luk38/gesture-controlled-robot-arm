@@ -64,3 +64,9 @@ sys.path.append("/usr/lib/ultraleap-hand-tracking-service")
 ### Terminal im Container
 
 docker exec -it 1900ac99c53f /bin/bash
+
+# TODO
+- Smoothness Velocity Control / Gripper
+- andere/richtige Steuerkommandos
+- Veröffentlichungen lesen
+- Kapitel schreiben
