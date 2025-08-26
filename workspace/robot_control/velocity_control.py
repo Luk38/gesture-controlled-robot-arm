@@ -18,49 +18,70 @@ X_ROT_SCALE = 0.1
 Y_ROT_SCALE = 0.02
 Z_ROT_SCALE = 0.02
 
-def smooth_velocity(current_velocity, target_velocity, alpha=0.5):
-    v_smoothed = alpha * target_velocity + (1 - alpha) * current_velocity #exponential smoothing
+global cx 
+global cy
+global cz
+
+def smooth_velocity(current_velocity, next_velocity, alpha=0.1):
+    v_smoothed = alpha * next_velocity + (1 - alpha) * current_velocity #exponential smoothing
+    
     return v_smoothed
 
-def acceleration_limiter(current_velocity, target_velocity, max_acceleration=0.01):
-    delta_v = target_velocity - current_velocity
+def acceleration_limiter(current_velocity, next_velocity, max_acceleration=0.01):
+    delta_v = next_velocity - current_velocity
     delta_v = np.clip(delta_v, -max_acceleration, max_acceleration)
+    
     return current_velocity + delta_v
 
 # jerk limiter
 
 def velocity_move(hand_data):
-    v_max = 0.1
-    scale = 0.0004
+    global cx, cy, cz
+    v_max = 0.09
+    scale = 0.0004 * 2
+
     vx = scale * (hand_data['z'] + X_OFFSET)
     vy = scale * (hand_data['x'] + Y_OFFSET)
     vz = scale * (hand_data['y'] + Z_OFFSET)
+
+    vx = smooth_velocity(cx, vx)
+    vy = smooth_velocity(cy, vy)
+    vz = smooth_velocity(cz, vz)
+
+    vx = acceleration_limiter(cx, vx)
+    vy = acceleration_limiter(cy, vy)
+    vz = acceleration_limiter(cz, vz)
 
     vx = np.clip(vx, -v_max, v_max)
     vy = np.clip(vy, -v_max, v_max)
     vz = np.clip(vz, -v_max, v_max)
 
-    hand_quat = np.array([
-        hand_data['orientation']['w'],
-        hand_data['orientation']['y'],
-        hand_data['orientation']['x'],
-        hand_data['orientation']['z']
-    ])
-    axis_angle = transform_utils.quat2axisangle(hand_quat)
-    print(axis_angle)
-    rx = (axis_angle[0] - 3) * X_ROT_SCALE
-    ry = (axis_angle[2]) * Y_ROT_SCALE
-    rz = (axis_angle[1]) * Z_ROT_SCALE
+    cx = vx
+    cy = vy
+    cz = vz
 
-    rx = np.clip(rx, -v_max, v_max)
-    ry = np.clip(ry, -v_max, v_max)
-    rz = np.clip(rz, -v_max, v_max)
+    # hand_quat = np.array([
+    #     hand_data['orientation']['w'],
+    #     hand_data['orientation']['y'],
+    #     hand_data['orientation']['x'],
+    #     hand_data['orientation']['z']
+    # ])
+    # axis_angle = transform_utils.quat2axisangle(hand_quat)
+    # print(axis_angle)
+    # rx = (axis_angle[0] - 3) * X_ROT_SCALE
+    # ry = (axis_angle[2]) * Y_ROT_SCALE
+    # rz = (axis_angle[1]) * Z_ROT_SCALE
 
-    action = [vx, vy, vz, -rx, ry, rz] + [-1]
+    # rx = np.clip(rx, -v_max, v_max)
+    # ry = np.clip(ry, -v_max, v_max)
+    # rz = np.clip(rz, -v_max, v_max)
+
+    action = [vx, vy, vz, 0, 0, 0] + [-1]
     #print("Action:", action)
     return action
 
 def main():
+    global cx, cy, cz
     robot_interface = FrankaInterface("config/charmander.yml"
                                           , use_visualizer=False)
     controller_type = "CARTESIAN_VELOCITY"
@@ -78,11 +99,15 @@ def main():
 
     reset_joints_to(robot_interface, reset_joint_positions)
     try:
-        vx = 0.0
-        for _ in range(20):
-            vx += 0.001
+        cx = 0.0
+        cy = 0.0
+        cz = 0.0
+        for _ in range(10):
+            cx += 0.001
+            cy += 0.001
+            cz += 0.001
             robot_interface.control(controller_type=controller_type,
-                                    action=[vx, vx, -vx, 0, 0, 0] + [-1],
+                                    action=[cx, cy, cz, 0, 0, 0] + [-1],
                                     controller_cfg=controller_cfg,
                                     )
         while True:
@@ -93,6 +118,7 @@ def main():
                                     action=velocity_move(hand_data),
                                     controller_cfg=controller_cfg,
                                     )
+            print('Velocities:', cx, cy, cz)
     except KeyboardInterrupt:
         print("Program stopped by user.")
     finally:
