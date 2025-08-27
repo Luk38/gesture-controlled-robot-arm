@@ -66,7 +66,10 @@ sys.path.append("/usr/lib/ultraleap-hand-tracking-service")
 docker exec -it 1900ac99c53f /bin/bash
 
 # TODO
-- Smoothness Velocity Control / Gripper
-- andere/richtige Steuerkommandos
+- Smoothness Velocity Control / Gripper / Rotation
+- andere Steuerkommandos
+Keine Steuerung bei geschlossener Hand
+- Für OSC Control updaten
 - Veröffentlichungen lesen
 - Kapitel schreiben
+- code schöner schreiben
