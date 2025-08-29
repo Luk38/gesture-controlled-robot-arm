@@ -67,9 +67,13 @@ docker exec -it 1900ac99c53f /bin/bash
 
 # TODO
 - Smoothness Velocity Control / Gripper / Rotation
-- andere Steuerkommandos
+- andere Steuerkommandos,
 Keine Steuerung bei geschlossener Hand
+- Problem bei zwei Händen im Tracker 
+Immer nur eine Hand soll getrackt werden
 - Für OSC Control updaten
+- Die anderen control Typen für die Simulation schreiben
 - Veröffentlichungen lesen
 - Kapitel schreiben
 - code schöner schreiben
+- user study

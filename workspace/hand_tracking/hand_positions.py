@@ -38,7 +38,6 @@ def DestroyConnection():
     lib.LeapDestroyConnection(connectionHandle[0])
     sock.close()
 
-
 IsConnected = False
 
 def OnConnect():

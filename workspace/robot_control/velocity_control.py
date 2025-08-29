@@ -23,7 +23,7 @@ global cy
 global cz
 
 def smooth_velocity(current_velocity, next_velocity, alpha=0.1):
-    v_smoothed = alpha * next_velocity + (1 - alpha) * current_velocity #exponential smoothing
+    v_smoothed = alpha * next_velocity + (1 - alpha) * current_velocity # exponential smoothing
     
     return v_smoothed
 
@@ -33,7 +33,7 @@ def acceleration_limiter(current_velocity, next_velocity, max_acceleration=0.01)
     
     return current_velocity + delta_v
 
-# jerk limiter
+# jerk limiter hier noch einbauen
 
 def velocity_move(hand_data):
     global cx, cy, cz
@@ -76,7 +76,11 @@ def velocity_move(hand_data):
     # ry = np.clip(ry, -v_max, v_max)
     # rz = np.clip(rz, -v_max, v_max)
 
-    action = [vx, vy, vz, 0, 0, 0] + [-1]
+    gripper = hand_data['pinch_strength']
+    if gripper == 0:
+        gripper = -1.0
+
+    action = [vx, vy, vz, 0, 0, 0] + [gripper]
     #print("Action:", action)
     return action
 
@@ -98,33 +102,43 @@ def main():
     ]
 
     reset_joints_to(robot_interface, reset_joint_positions)
+
+    cx = cy = cz = 0.0
+
+    for _ in range(5):
+        cx += 0.001
+        cy += 0.001
+        cz += 0.001
+        robot_interface.control(controller_type=controller_type,
+                                action=[cx, cy, cz, 0, 0, 0] + [-1],
+                                controller_cfg=controller_cfg,
+                                )
+            
     try:
-        cx = 0.0
-        cy = 0.0
-        cz = 0.0
-        for _ in range(10):
-            cx += 0.001
-            cy += 0.001
-            cz += 0.001
-            robot_interface.control(controller_type=controller_type,
-                                    action=[cx, cy, cz, 0, 0, 0] + [-1],
-                                    controller_cfg=controller_cfg,
-                                    )
         while True:
             # Hand tracking data
             hand_data = receive_hand_positions()
+            if hand_data['grab_strength'] > 0.8:
+                cx *= 0.5
+                cy *= 0.5
+                cz *= 0.5
+                action = [cx, cy, cz, 0, 0, 0] + [-1]
+            else:
+                if hand_data is None:
+                    action = [cx, cy, cz, 0, 0, 0] + [-1]
+                else:
+                    action = velocity_move(hand_data)
 
             robot_interface.control(controller_type=controller_type,
-                                    action=velocity_move(hand_data),
+                                    action=action,
                                     controller_cfg=controller_cfg,
                                     )
-            print('Velocities:', cx, cy, cz)
+            #print('Velocities:', cx, cy, cz)
     except KeyboardInterrupt:
         print("Program stopped by user.")
     finally:
         print("Closing robot interface.")
         robot_interface.close()
-
 
 
 if __name__ == "__main__":

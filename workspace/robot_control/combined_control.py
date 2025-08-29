@@ -48,6 +48,13 @@ elif simulation:
     CONTROL_FREQ = 60 # Control frequency in Hz
 
 def check_hand_data(hand_data):
+    """
+    Check if the hand is in the inner or outer area.
+    Args:
+        hand_data (dict): Hand tracking data.
+    Returns:
+        str: "inner" if the hand is in the inner area, "outer" otherwise.
+    """
     if -INNER_X_LIMIT < hand_data['x'] < INNER_X_LIMIT and INNER_Z_MIN < hand_data['z'] < INNER_Z_MAX:
         return "inner"
     else:
