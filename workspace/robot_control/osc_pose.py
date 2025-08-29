@@ -152,15 +152,18 @@ def main():
         reset_joints_to(robot_interface, reset_joint_positions)
         try:
             while True:
-                # Hand tracking data              
-                hand_data = receive_hand_positions()
-                target_pose = get_target_pose(hand_data)
-
                 # current pose
                 current_pose = robot_interface.last_eef_pose
+                # Hand tracking data              
+                hand_data = receive_hand_positions()
+                if hand_data['grab_strength'] > 0.8:
+                    action = [0.0, 0, 0, 0, 0, 0] + [-1]
+                else:
+                    target_pose = get_target_pose(hand_data)
+                    action = osc_move(current_pose, target_pose)
 
                 robot_interface.control(controller_type=controller_type,
-                                        action=osc_move(current_pose, target_pose),
+                                        action=action,
                                         controller_cfg=controller_cfg,
                                     )
                 target_pos, target_quat, grasp = target_pose

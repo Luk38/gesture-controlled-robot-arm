@@ -20,7 +20,6 @@ def receive_hand_positions(ip=IP, port=PORT, buffer_size=BUFFER_SIZE):
     """
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     sock.bind((ip, port))
-    sock.setblocking(False)
     while True:
         data, addr = sock.recvfrom(buffer_size)
         hand_data = json.loads(data.decode())

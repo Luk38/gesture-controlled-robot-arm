@@ -1,0 +1,5 @@
+workspace/robot_control/logs/
+workspace/robot_control/__pycache__/
+workspace/hand_tracking/tracker_log.txt
+tracker_log.txt
+logs/

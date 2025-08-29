@@ -1,5 +1,5 @@
 import numpy as np
-import time
+import threading, time
 from receive_hand_positions import receive_hand_positions
 import robosuite as suite
 #import sys
@@ -18,11 +18,18 @@ X_ROT_SCALE = 0.1
 Y_ROT_SCALE = 0.02
 Z_ROT_SCALE = 0.02
 
+# Global variables
 global cx 
 global cy
 global cz
+cx = cy = cz = 0.0
 
-def smooth_velocity(current_velocity, next_velocity, alpha=0.1):
+global hand_data
+hand_data = None
+
+lock = threading.Lock()
+
+def smooth_velocity(current_velocity, next_velocity, alpha=0.2):
     v_smoothed = alpha * next_velocity + (1 - alpha) * current_velocity # exponential smoothing
     
     return v_smoothed
@@ -37,8 +44,8 @@ def acceleration_limiter(current_velocity, next_velocity, max_acceleration=0.01)
 
 def velocity_move(hand_data):
     global cx, cy, cz
-    v_max = 0.09
-    scale = 0.0004 * 2
+    v_max = 0.1
+    scale = 0.0004 
 
     vx = scale * (hand_data['z'] + X_OFFSET)
     vy = scale * (hand_data['x'] + Y_OFFSET)
@@ -84,8 +91,18 @@ def velocity_move(hand_data):
     #print("Action:", action)
     return action
 
+def receiver_loop(stop_event):
+    global hand_data
+    while not stop_event.is_set():
+        data = receive_hand_positions()
+        with lock:
+            hand_data = data
+    print("receiver loop closed")
+
 def main():
     global cx, cy, cz
+    global hand_data
+
     robot_interface = FrankaInterface("config/charmander.yml"
                                           , use_visualizer=False)
     controller_type = "CARTESIAN_VELOCITY"
@@ -103,8 +120,7 @@ def main():
 
     reset_joints_to(robot_interface, reset_joint_positions)
 
-    cx = cy = cz = 0.0
-
+    # anfahren
     for _ in range(5):
         cx += 0.001
         cy += 0.001
@@ -113,30 +129,39 @@ def main():
                                 action=[cx, cy, cz, 0, 0, 0] + [-1],
                                 controller_cfg=controller_cfg,
                                 )
-            
+        
+    stop_event = threading.Event()
+    receive_loop = threading.Thread(target=receiver_loop, args=(stop_event,))
+    receive_loop.start()
+
     try:
         while True:
-            # Hand tracking data
-            hand_data = receive_hand_positions()
-            if hand_data['grab_strength'] > 0.8:
-                cx *= 0.5
-                cy *= 0.5
-                cz *= 0.5
+            with lock:
+                hd = hand_data
+            if hd is None:
                 action = [cx, cy, cz, 0, 0, 0] + [-1]
-            else:
-                if hand_data is None:
+            else: 
+                if hd['grab_strength'] > 0.8:
+                    cx *= 0.5
+                    cy *= 0.5
+                    cz *= 0.5
                     action = [cx, cy, cz, 0, 0, 0] + [-1]
                 else:
-                    action = velocity_move(hand_data)
+                    action = velocity_move(hd)
 
             robot_interface.control(controller_type=controller_type,
                                     action=action,
                                     controller_cfg=controller_cfg,
                                     )
-            #print('Velocities:', cx, cy, cz)
+            print('Velocities:', cx, cy, cz)
     except KeyboardInterrupt:
         print("Program stopped by user.")
     finally:
+        print('closing receive loop')
+        stop_event.set()
+        receive_loop.join()
+        hand_data = None
+
         print("Closing robot interface.")
         robot_interface.close()
 
