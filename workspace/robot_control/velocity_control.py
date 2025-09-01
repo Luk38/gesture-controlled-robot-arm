@@ -40,7 +40,12 @@ def acceleration_limiter(current_velocity, next_velocity, max_acceleration=0.01)
     
     return current_velocity + delta_v
 
-# jerk limiter hier noch einbauen
+def jerk_limiter(current_acceleration, next_acceleration, max_jerk=0.01):
+    delta_a = next_acceleration - current_acceleration
+    delta_a = np.clip(delta_a, -max_jerk, max_jerk)
+    
+    return current_acceleration + delta_a
+    
 
 def velocity_move(hand_data):
     global cx, cy, cz
