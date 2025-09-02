@@ -150,8 +150,14 @@ def main():
         ]
 
         reset_joints_to(robot_interface, reset_joint_positions)
+        last = time.perf_counter()
         try:
             while True:
+                now = time.perf_counter()
+                dt = now - last
+                print('dt: ', dt)
+                freq = 1.0 / dt if dt > 0 else float('inf')
+                last = now
                 # current pose
                 current_pose = robot_interface.last_eef_pose
                 # Hand tracking data              

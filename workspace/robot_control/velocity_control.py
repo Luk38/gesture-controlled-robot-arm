@@ -18,31 +18,40 @@ X_ROT_SCALE = 0.1
 Y_ROT_SCALE = 0.02
 Z_ROT_SCALE = 0.02
 
-DT = 0.01
+DT = 0.05
 
 # Global variables
 global cx 
 global cy
 global cz
 cx = cy = cz = 0.0
+global crx
+global cry
+global crz
+crx = cry = crz = 0.0
+
+global v_current
+v_current = np.array([cx, cy, cz])
+global a_current
+a_current = np.array([0.0, 0.0, 0.0])
 
 global hand_data
 hand_data = None
 
 lock = threading.Lock()
 
-def smooth_velocity(current_velocity, next_velocity, alpha=0.2):
+def smooth_velocity(current_velocity, next_velocity, alpha=0.5):
     v_smoothed = alpha * next_velocity + (1 - alpha) * current_velocity # exponential smoothing
     
     return v_smoothed
 
-def acceleration_limiter(current_velocity, next_velocity, max_acceleration=0.01):
+def acceleration_limiter(current_velocity, next_velocity, max_acceleration = 0.01):
     delta_v = next_velocity - current_velocity
     delta_v = np.clip(delta_v, -max_acceleration, max_acceleration)
-    
+
     return current_velocity + delta_v
 
-def jerk_limiter(current_acceleration, next_acceleration, max_jerk=0.01):
+def jerk_limiter(current_acceleration, next_acceleration, max_jerk=0.04):
     delta_a = next_acceleration - current_acceleration
     delta_a = np.clip(delta_a, -max_jerk*DT, max_jerk*DT)
     
@@ -50,8 +59,12 @@ def jerk_limiter(current_acceleration, next_acceleration, max_jerk=0.01):
 
 def velocity_move(hand_data):
     global cx, cy, cz
+    global crx, cry, crz
+    #global v_current, a_current
     v_max = 0.1
-    scale = 0.0004 
+    scale = 0.0005
+
+    # exponential smoothing + acceleration limiter
 
     vx = scale * (hand_data['z'] + X_OFFSET)
     vy = scale * (hand_data['x'] + Y_OFFSET)
@@ -71,62 +84,77 @@ def velocity_move(hand_data):
 
     # Für zu kleine Bewegungen
     # kein Ruckeln
-    if vx < 0.01 and vx > -0.01:
+    if np.abs(vx) < 0.001:
         vx = 0
-    if vy < 0.01 and vy > -0.01:
+    if np.abs(vy) < 0.001:
         vy = 0
-    if vz < 0.01 and vz > -0.01:
+    if np.abs(vz) < 0.001:
         vz = 0
 
     cx = vx
     cy = vy
     cz = vz
 
-    # hand_quat = np.array([
-    #     hand_data['orientation']['w'],
-    #     hand_data['orientation']['y'],
-    #     hand_data['orientation']['x'],
-    #     hand_data['orientation']['z']
+    # Jerk limiter
+    # v = (vx, vy, vz)
+    # v_current = np.array([cx, cy, cz])
+    # a_current = np.array([0.0, 0.0, 0.0])
+
+    # v_cmd = np.array([
+    #     scale * (hand_data['z'] + X_OFFSET),
+    #     scale * (hand_data['x'] + Y_OFFSET),
+    #     scale * (hand_data['y'] + Z_OFFSET)
     # ])
-    # axis_angle = transform_utils.quat2axisangle(hand_quat)
-    # print(axis_angle)
-    # rx = (axis_angle[0] - 3) * X_ROT_SCALE
-    # ry = (axis_angle[2]) * Y_ROT_SCALE
-    # rz = (axis_angle[1]) * Z_ROT_SCALE
 
-    # rx = np.clip(rx, -v_max, v_max)
-    # ry = np.clip(ry, -v_max, v_max)
-    # rz = np.clip(rz, -v_max, v_max)
+    # a_des = (v_cmd - v_current) / DT
 
-    # max_acceleration = 0.2
-    # max_delta_v = max_acceleration * DT
-    # vx = acceleration_limiter(cx, vx)
-    # vy = acceleration_limiter(cy, vy)
-    # vz = acceleration_limiter(cz, vz)
+    # a_cmd = jerk_limiter(a_current, a_des)
+    # a_cmd = np.clip(a_cmd, -0.2, 0.2)
 
-    # ax = (vx - cx) / DT
-    # ay = (vy - cy) / DT
-    # az = (vz - cz) / DT
-    # ax = jerk_limiter(0, ax)
-    # ay = jerk_limiter(0, ay)
-    # az = jerk_limiter(0, az)
-    # vx = cx + ax * DT
-    # vy = cy + ay * DT
-    # vz = cz + az * DT
 
-    # vx = np.clip(vx, -v_max, v_max)
-    # vy = np.clip(vy, -v_max, v_max)
-    # vz = np.clip(vz, -v_max, v_max)
+    # v_current += a_cmd * DT
 
-    # cx = vx
-    # cy = vy
-    # cz = vz
+    # a_current = a_cmd
+
+    # vx = v_current[0]
+    # vy = v_current[1]
+    # vz = v_current[2]
+
+    hand_quat = np.array([
+        hand_data['orientation']['w'],
+        hand_data['orientation']['y'],
+        hand_data['orientation']['x'],
+        hand_data['orientation']['z']
+    ])
+
+    axis_angle = transform_utils.quat2axisangle(hand_quat)
+    #print(axis_angle)
+
+    rx = (axis_angle[0] - 3) * X_ROT_SCALE
+    ry = (axis_angle[2]) * Y_ROT_SCALE
+    rz = (axis_angle[1]) * Z_ROT_SCALE
+
+    rx = smooth_velocity(crx, rx)
+    ry = smooth_velocity(cry, ry)
+    rz = smooth_velocity(crz, rz)
+
+    rx = acceleration_limiter(crx, rx, 1)
+    ry = acceleration_limiter(cry, ry, 1)
+    rz = acceleration_limiter(crz, rz, 1)
+
+    rx = np.clip(rx, -v_max, v_max)
+    ry = np.clip(ry, -v_max, v_max)
+    rz = np.clip(rz, -v_max, v_max)
+
+    crx = rx
+    cry = ry
+    crz = rz
 
     gripper = hand_data['pinch_strength']
     if gripper == 0:
         gripper = -1.0
 
-    action = [vx, vy, vz, 0, 0, 0] + [gripper]
+    action = [vx, vy, vz, rx, ry, rz] + [gripper]
     #print("Action:", action)
     return action
 
@@ -140,6 +168,7 @@ def receiver_loop(stop_event):
 
 def main():
     global cx, cy, cz
+    global crx, cry, crz
     global hand_data
 
     robot_interface = FrankaInterface("config/charmander.yml"
@@ -173,8 +202,15 @@ def main():
     receive_loop = threading.Thread(target=receiver_loop, args=(stop_event,))
     receive_loop.start()
 
+    last = time.perf_counter()
+
     try:
         while True:
+            now = time.perf_counter()
+            dt = now - last
+            #print('dt: ', dt)
+            freq = 1.0 / dt if dt > 0 else float('inf')
+            last = now
             with lock:
                 hd = hand_data
             if hd is None:
@@ -192,7 +228,9 @@ def main():
                                     action=action,
                                     controller_cfg=controller_cfg,
                                     )
-            print('Velocities:', cx, cy, cz)
+
+            print('Velocities:', crx, cry, crz)
+            last = now
     except KeyboardInterrupt:
         print("Program stopped by user.")
     finally:
