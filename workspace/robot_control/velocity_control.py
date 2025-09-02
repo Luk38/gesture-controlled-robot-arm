@@ -18,6 +18,8 @@ X_ROT_SCALE = 0.1
 Y_ROT_SCALE = 0.02
 Z_ROT_SCALE = 0.02
 
+DT = 0.01
+
 # Global variables
 global cx 
 global cy
@@ -42,10 +44,9 @@ def acceleration_limiter(current_velocity, next_velocity, max_acceleration=0.01)
 
 def jerk_limiter(current_acceleration, next_acceleration, max_jerk=0.01):
     delta_a = next_acceleration - current_acceleration
-    delta_a = np.clip(delta_a, -max_jerk, max_jerk)
+    delta_a = np.clip(delta_a, -max_jerk*DT, max_jerk*DT)
     
     return current_acceleration + delta_a
-    
 
 def velocity_move(hand_data):
     global cx, cy, cz
@@ -68,6 +69,15 @@ def velocity_move(hand_data):
     vy = np.clip(vy, -v_max, v_max)
     vz = np.clip(vz, -v_max, v_max)
 
+    # Für zu kleine Bewegungen
+    # kein Ruckeln
+    if vx < 0.01 and vx > -0.01:
+        vx = 0
+    if vy < 0.01 and vy > -0.01:
+        vy = 0
+    if vz < 0.01 and vz > -0.01:
+        vz = 0
+
     cx = vx
     cy = vy
     cz = vz
@@ -87,6 +97,30 @@ def velocity_move(hand_data):
     # rx = np.clip(rx, -v_max, v_max)
     # ry = np.clip(ry, -v_max, v_max)
     # rz = np.clip(rz, -v_max, v_max)
+
+    # max_acceleration = 0.2
+    # max_delta_v = max_acceleration * DT
+    # vx = acceleration_limiter(cx, vx)
+    # vy = acceleration_limiter(cy, vy)
+    # vz = acceleration_limiter(cz, vz)
+
+    # ax = (vx - cx) / DT
+    # ay = (vy - cy) / DT
+    # az = (vz - cz) / DT
+    # ax = jerk_limiter(0, ax)
+    # ay = jerk_limiter(0, ay)
+    # az = jerk_limiter(0, az)
+    # vx = cx + ax * DT
+    # vy = cy + ay * DT
+    # vz = cz + az * DT
+
+    # vx = np.clip(vx, -v_max, v_max)
+    # vy = np.clip(vy, -v_max, v_max)
+    # vz = np.clip(vz, -v_max, v_max)
+
+    # cx = vx
+    # cy = vy
+    # cz = vz
 
     gripper = hand_data['pinch_strength']
     if gripper == 0:
