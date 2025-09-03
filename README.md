@@ -65,7 +65,7 @@ sys.path.append("/usr/lib/ultraleap-hand-tracking-service")
 
 docker exec -it 1900ac99c53f /bin/bash
 
-# TODO
+# TODOs
 - Smoothness Velocity Control / Gripper / Rotation
 - Problem bei zwei Händen im Tracker 
 Immer nur eine Hand soll getrackt werden

@@ -14,13 +14,20 @@ X_OFFSET = 50
 Y_OFFSET = 0
 Z_OFFSET = -200 
 
-X_ROT_SCALE = 0.1
-Y_ROT_SCALE = 0.02
-Z_ROT_SCALE = 0.02
+X_ROT_SCALE = -0.1
+Y_ROT_SCALE = 0.04
+Z_ROT_SCALE = -0.02
 
 DT = 0.05
 
 # Global variables
+global translation
+translation = np.array([0.0, 0.0, 0.0])
+global rotation
+rotation = np.array([0.0, 0.0, 0.0])
+global velocities
+velocities = translation.tolist() + rotation.tolist()
+
 global cx 
 global cy
 global cz
@@ -45,7 +52,7 @@ def smooth_velocity(current_velocity, next_velocity, alpha=0.5):
     
     return v_smoothed
 
-def acceleration_limiter(current_velocity, next_velocity, max_acceleration = 0.01):
+def acceleration_limiter(current_velocity, next_velocity, max_acceleration = 0.02):
     delta_v = next_velocity - current_velocity
     delta_v = np.clip(delta_v, -max_acceleration, max_acceleration)
 
@@ -58,6 +65,8 @@ def jerk_limiter(current_acceleration, next_acceleration, max_jerk=0.04):
     return current_acceleration + delta_a
 
 def velocity_move(hand_data):
+    global translation, rotation, velocities
+
     global cx, cy, cz
     global crx, cry, crz
     #global v_current, a_current
@@ -65,7 +74,7 @@ def velocity_move(hand_data):
     scale = 0.0005
 
     # exponential smoothing + acceleration limiter
-
+    
     vx = scale * (hand_data['z'] + X_OFFSET)
     vy = scale * (hand_data['x'] + Y_OFFSET)
     vz = scale * (hand_data['y'] + Z_OFFSET)
@@ -129,22 +138,32 @@ def velocity_move(hand_data):
 
     axis_angle = transform_utils.quat2axisangle(hand_quat)
     #print(axis_angle)
+    scale_rot = 10
+    rx = (axis_angle[0] - 3) * X_ROT_SCALE * scale_rot
+    ry = (axis_angle[2]) * Y_ROT_SCALE * scale_rot
+    rz = (axis_angle[1] + 0.01) * Z_ROT_SCALE * scale_rot
 
-    rx = (axis_angle[0] - 3) * X_ROT_SCALE
-    ry = (axis_angle[2]) * Y_ROT_SCALE
-    rz = (axis_angle[1]) * Z_ROT_SCALE
+    print('raw', rx, ry, rz)
 
-    rx = smooth_velocity(crx, rx)
-    ry = smooth_velocity(cry, ry)
-    rz = smooth_velocity(crz, rz)
+    if np.abs(rx) < 0.01 * scale_rot:
+        rx = 0
+    if np.abs(ry) < 0.01 * scale_rot:
+        ry = 0
+    if np.abs(rz) < 0.01 * scale_rot:
+        rz = 0
+    print('close range limited', rx, ry, rz)
 
-    rx = acceleration_limiter(crx, rx, 1)
-    ry = acceleration_limiter(cry, ry, 1)
-    rz = acceleration_limiter(crz, rz, 1)
+    rx = smooth_velocity(crx, rx, 0.5)
+    ry = smooth_velocity(cry, ry, 0.5)
+    rz = smooth_velocity(crz, rz, 0.5)
 
-    rx = np.clip(rx, -v_max, v_max)
-    ry = np.clip(ry, -v_max, v_max)
-    rz = np.clip(rz, -v_max, v_max)
+    print('smoothed', rx, ry, rz)
+
+    rx = acceleration_limiter(crx, rx, 0.05)
+    ry = acceleration_limiter(cry, ry, 0.05)
+    rz = acceleration_limiter(crz, rz, 0.05)
+
+    print('acc limited',rx, ry, rz)
 
     crx = rx
     cry = ry
@@ -211,6 +230,8 @@ def main():
             #print('dt: ', dt)
             freq = 1.0 / dt if dt > 0 else float('inf')
             last = now
+            quat, pos = robot_interface.last_eef_quat_and_pos
+            axis_angle = transform_utils.quat2axisangle(quat)
             with lock:
                 hd = hand_data
             if hd is None:
@@ -220,8 +241,12 @@ def main():
                     cx *= 0.5
                     cy *= 0.5
                     cz *= 0.5
+                    cx *= 0.001
+                    cy *= 0.001
+                    cz *= 0.001
                     action = [cx, cy, cz, 0, 0, 0] + [-1]
                 else:
+                    #print(axis_angle)
                     action = velocity_move(hd)
 
             robot_interface.control(controller_type=controller_type,
@@ -229,7 +254,7 @@ def main():
                                     controller_cfg=controller_cfg,
                                     )
 
-            print('Velocities:', crx, cry, crz)
+            #print('Velocities:', crx, cry, crz)
             last = now
     except KeyboardInterrupt:
         print("Program stopped by user.")
