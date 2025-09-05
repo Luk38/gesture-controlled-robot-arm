@@ -1,7 +1,7 @@
 import numpy as np
 import time
 from receive_hand_positions import receive_hand_positions
-import robosuite as suite
+#import robosuite as suite
 from deoxys.franka_interface import FrankaInterface
 from deoxys.utils import transform_utils
 from deoxys.utils.config_utils import get_default_controller_config
@@ -23,6 +23,9 @@ if not simulation:
     X_OFFSET = 0.6  # x-axis offset for the robot
     Y_OFFSET = -0.02  # y-axis offset for the robot
     Z_OFFSET = -0.4  # z-axis offset for the robot
+    X_OFFSET = 50
+    Y_OFFSET = 0
+    Z_OFFSET = -200 
 
 # Simulation
 elif simulation:
@@ -58,7 +61,7 @@ def get_target_pose(hand_data):
     #print("target_pos_z:", target_pos[2])
     return target_pos, target_quat, grasp
 
-def osc_move(current_pose, target_pose):
+def osc_move(current_pose, target_pose, raw_lin):
     if simulation:
         target_pos, target_quat, grasp = target_pose
         current_pos, current_quat = current_pose
@@ -81,10 +84,12 @@ def osc_move(current_pose, target_pose):
     # print("action_axis_angle:", action_axis_angle)
     # action_pos = np.clip(action_pos, -1, 1)
     action_axis_angle = np.clip(action_axis_angle, -0.3, 0.3)
-
     # gripper
     if grasp == 0:
         grasp = np.array([-1.0])
+
+    action_pos = target_pos.flatten()
+    action_pos = raw_lin
 
     #action_pos.tolist()
     #action_axis_angle.tolist()
@@ -123,17 +128,23 @@ def main():
             current_pose = robot_interface.last_eef_pose
             # Hand tracking data              
             hand_data = receive_hand_positions()
+            scale_lin = 0.005
+            raw_lin = np.array([
+                scale_lin * (hand_data['z'] + X_OFFSET),
+                scale_lin * (hand_data['x'] + Y_OFFSET),
+                scale_lin * (hand_data['y'] + Z_OFFSET),
+            ])
             if hand_data['grab_strength'] > 0.8:
                 action = [0.0, 0, 0, 0, 0, 0] + [-1]
             else:
                 target_pose = get_target_pose(hand_data)
-                action = osc_move(current_pose, target_pose)
+                action = osc_move(current_pose, target_pose, raw_lin)
 
             robot_interface.control(controller_type=controller_type,
                                     action=action,
                                     controller_cfg=controller_cfg,
                                     )
-            target_pos, target_quat, grasp = target_pose
+            #target_pos, target_quat, grasp = target_pose
             # print("target_pos:", target_pos)
             # print("current_pos:", current_pose[:3, 3:])
     except KeyboardInterrupt:

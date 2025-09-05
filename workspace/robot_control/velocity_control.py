@@ -68,7 +68,7 @@ def velocity_move(hd):
     ])
     axis_angle = transform_utils.quat2axisangle(hand_quat)
     #print(axis_angle)
-    scale_rot = 2
+    scale_rot = 5
     raw_rot = np.array([
         (axis_angle[0] - 3)     * X_ROT_SCALE * scale_rot,
         (axis_angle[2])         * Y_ROT_SCALE * scale_rot,
@@ -78,15 +78,15 @@ def velocity_move(hd):
     rot_deadband = 0.01 * scale_rot
     raw_rot = np.where(np.abs(raw_rot) < rot_deadband, 0.0, raw_rot)
 
-    rot_smoothed = smooth_velocity(vel_rot, raw_rot, 0.5)
-    rot_limited = acceleration_limiter(vel_rot, rot_smoothed, 0.05)
+    rot_smoothed = smooth_velocity(vel_rot, raw_rot, 0.3)
+    rot_limited = acceleration_limiter(vel_rot, rot_smoothed, 0.08)
     vel_rot[:] = rot_limited
 
     gripper = hd['pinch_strength']
     if gripper == 0:
         gripper = -1.0
 
-    vel_rot = np.zeros(3)
+    #vel_rot = np.zeros(3)
     action = vel_lin.tolist() + vel_rot.tolist() + [gripper]
     return action
 

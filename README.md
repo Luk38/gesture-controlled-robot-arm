@@ -63,6 +63,9 @@ sys.path.append("/usr/lib/ultraleap-hand-tracking-service")
 
 ### Terminal im Container
 
+#### neu
+docker exec -it aa43ef451ae3 /bin/bash 
+
 docker exec -it 1900ac99c53f /bin/bash
 
 ### Deoxys with Spacemouse
