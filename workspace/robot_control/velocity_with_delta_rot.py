@@ -40,7 +40,7 @@ def jerk_limiter(current_acc, next_acc, max_jerk=0.04):
     delta_a = np.clip(delta_a, -max_jerk * DT, max_jerk * DT)
     return current_acc + delta_a
 
-def velocity_move(hd):
+def velocity_move(hd, current_pose):
     global vel_lin, vel_rot
 
     v_max = 0.1
@@ -60,33 +60,32 @@ def velocity_move(hd):
     vel_lin[:] = v_limited
 
     # Rotation
+    axis_inv = -1
     hand_quat = np.array([
         hd['orientation']['w'],
-        hd['orientation']['y'],
-        hd['orientation']['x'],
-        hd['orientation']['z']
+        hd['orientation']['y'] * axis_inv,
+        hd['orientation']['x'] * axis_inv,
+        hd['orientation']['z'] * axis_inv
     ])
-    axis_angle = transform_utils.quat2axisangle(hand_quat)
-    #print(axis_angle)
-    scale_rot = 2
-    raw_rot = np.array([
-        (axis_angle[0] - 3)     * X_ROT_SCALE * scale_rot,
-        (axis_angle[2])         * Y_ROT_SCALE * scale_rot,
-        (axis_angle[1] + 0.01)  * Z_ROT_SCALE * scale_rot,
-    ])
+    current_rot = current_pose[:3, :3]
+    current_quat = transform_utils.mat2quat(current_rot)
+    if np.dot(hand_quat, current_quat) < 0.0:
+        current_quat = -current_quat
+    quat_diff = transform_utils.quat_distance(hand_quat, current_quat)
+    axis_angle_diff = transform_utils.quat2axisangle(quat_diff)
+    action_axis_angle = axis_angle_diff.flatten()
 
-    rot_deadband = 0.01 * scale_rot
-    raw_rot = np.where(np.abs(raw_rot) < rot_deadband, 0.0, raw_rot)
-
-    rot_smoothed = smooth_velocity(vel_rot, raw_rot, 0.5)
-    rot_limited = acceleration_limiter(vel_rot, rot_smoothed, 0.05)
-    vel_rot[:] = rot_limited
+    vel_smoothed_rot = smooth_velocity(vel_rot, action_axis_angle, 0.5)
+    vel_limited_rot = acceleration_limiter(vel_smoothed_rot, action_axis_angle, 0.04)
+    vel_rot = np.clip(vel_limited_rot, -0.1, 0.1)
+    vel_rot = np.where(np.abs(vel_rot) < 0.001, 0.0, vel_rot)
 
     gripper = hd['pinch_strength']
     if gripper == 0:
         gripper = -1.0
 
-    vel_rot = np.zeros(3)
+    #vel_rot = np.zeros(3)
+    vel_lin = np.zeros(3)
     action = vel_lin.tolist() + vel_rot.tolist() + [gripper]
     return action
 
@@ -119,7 +118,7 @@ def main():
     # Soft start
     for _ in range(5):
         vel_lin += np.array([0.001, 0.001, 0.001])
-        #vel_rot += np.array([0.001, 0.001, 0.001])
+        vel_rot += np.array([0.001, 0.001, 0.001])
         robot_interface.control(
             controller_type=controller_type,
             action=vel_lin.tolist() + vel_rot.tolist() + [-1],
@@ -152,7 +151,7 @@ def main():
                     action = vel_lin.tolist() + vel_rot.tolist() + [-1]
                 else:
                     #print(axis_angle)
-                    action = velocity_move(hd)
+                    action = velocity_move(hd, current_pose=robot_interface.last_eef_pose)
 
             robot_interface.control(
                 controller_type=controller_type,
