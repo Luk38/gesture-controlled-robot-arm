@@ -65,6 +65,10 @@ sys.path.append("/usr/lib/ultraleap-hand-tracking-service")
 
 docker exec -it 1900ac99c53f /bin/bash
 
+### Deoxys with Spacemouse
+
+python examples/run_deoxys_with_space_mouse.py --vendor-id 9583 --product-id 50746
+
 # TODOs
 - Smoothness Velocity Control / Gripper / Rotation
 - Problem bei zwei Händen im Tracker 
