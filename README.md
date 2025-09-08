@@ -73,12 +73,6 @@ docker exec -it 1900ac99c53f /bin/bash
 python examples/run_deoxys_with_space_mouse.py --vendor-id 9583 --product-id 50746
 
 # TODOs
-- Smoothness Velocity Control / Gripper / Rotation
 - Problem bei zwei Händen im Tracker 
 Immer nur eine Hand soll getrackt werden
-- Für OSC Control updaten
-- Velocity control für die Simulation
-- Veröffentlichungen lesen
-- Kapitel schreiben
-- code schöner schreiben
-- user study
+- Neue OSC control anpassen
