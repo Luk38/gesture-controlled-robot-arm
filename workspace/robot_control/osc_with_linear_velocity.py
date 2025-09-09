@@ -17,15 +17,15 @@ if not simulation:
     X_POS_SCALE = 0.009  # Scale for robots x position
     Y_POS_SCALE = 0.004  # Scale for robots y position
     Z_POS_SCALE = 0.004  # Scale for robots z position
-    X_ROT_SCALE = -1  # Scale for robots x rotation
+    X_ROT_SCALE = 1  # Scale for robots x rotation
     Y_ROT_SCALE = -1  # Scale for robots y rotation   
     Z_ROT_SCALE = -1  # Scale for robots z rotation
     X_OFFSET = 0.6  # x-axis offset for the robot
     Y_OFFSET = -0.02  # y-axis offset for the robot
     Z_OFFSET = -0.4  # z-axis offset for the robot
-    X_OFFSET = 50
+    X_OFFSET = 30
     Y_OFFSET = 0
-    Z_OFFSET = -200 
+    Z_OFFSET = -220 
 
 # Simulation
 elif simulation:
@@ -75,21 +75,21 @@ def osc_move(current_pose, target_pose, raw_lin):
         current_quat = -current_quat
     quat_diff = transform_utils.quat_distance(target_quat, current_quat)
     axis_angle_diff = transform_utils.quat2axisangle(quat_diff)
-
-    action_pos = (target_pos - current_pos).flatten() 
-    print("target_pos:", target_pos)
-    print("current_pos:", current_pos)
-    print("action_pos:", action_pos)
     action_axis_angle = axis_angle_diff.flatten()
     # print("action_axis_angle:", action_axis_angle)
     # action_pos = np.clip(action_pos, -1, 1)
     action_axis_angle = np.clip(action_axis_angle, -0.3, 0.3)
     # gripper
-    if grasp == 0:
+    if grasp <= 0.5:
         grasp = np.array([-1.0])
 
-    action_pos = target_pos.flatten()
     action_pos = raw_lin
+    print("target_lin:", raw_lin)
+    # print("current_pos:", current_pos)
+    print("action_pos:", action_pos, grasp)
+
+    action_pos = np.where(np.abs(action_pos) < 0.01, 0, action_pos)
+    action_axis_angle = np.where(np.abs(action_axis_angle) < 0.01, 0, action_axis_angle)
 
     #action_pos.tolist()
     #action_axis_angle.tolist()
@@ -116,14 +116,8 @@ def main():
         ]
 
     reset_joints_to(robot_interface, reset_joint_positions)
-    last = time.perf_counter()
     try:
         while True:
-            now = time.perf_counter()
-            dt = now - last
-            print('dt: ', dt)
-            freq = 1.0 / dt if dt > 0 else float('inf')
-            last = now
             # current pose
             current_pose = robot_interface.last_eef_pose
             # Hand tracking data              

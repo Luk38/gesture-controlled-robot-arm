@@ -17,12 +17,12 @@ if not simulation:
     X_POS_SCALE = 0.009  # Scale for robots x position
     Y_POS_SCALE = 0.004  # Scale for robots y position
     Z_POS_SCALE = 0.004  # Scale for robots z position
-    X_ROT_SCALE = -1  # Scale for robots x rotation
+    X_ROT_SCALE = 1  # Scale for robots x rotation
     Y_ROT_SCALE = -1  # Scale for robots y rotation   
     Z_ROT_SCALE = -1  # Scale for robots z rotation
     X_OFFSET = 0.6  # x-axis offset for the robot
     Y_OFFSET = -0.02  # y-axis offset for the robot
-    Z_OFFSET = -0.4  # z-axis offset for the robot
+    Z_OFFSET = -0.5  # z-axis offset for the robot
 
 # Simulation
 elif simulation:
@@ -150,14 +150,8 @@ def main():
         ]
 
         reset_joints_to(robot_interface, reset_joint_positions)
-        last = time.perf_counter()
         try:
             while True:
-                now = time.perf_counter()
-                dt = now - last
-                print('dt: ', dt)
-                freq = 1.0 / dt if dt > 0 else float('inf')
-                last = now
                 # current pose
                 current_pose = robot_interface.last_eef_pose
                 # Hand tracking data              
