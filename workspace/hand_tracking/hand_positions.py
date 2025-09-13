@@ -53,7 +53,7 @@ def OnFrame(frame):
     # if frame.info.frame_id % 2 != 0:
     #     return
     for h in range(frame.nHands):
-        hand = frame.pHands[h]
+        hand = frame.pHands[0]
         data = {
             "id": hand.id,
             "type": "left" if hand.type == lib.eLeapHandType_Left else "right",
