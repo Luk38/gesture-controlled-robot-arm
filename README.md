@@ -74,6 +74,8 @@ python examples/run_deoxys_with_space_mouse.py --vendor-id 9583 --product-id 507
 python gesture-controlled-robot-arm/workspace/run_deoxys_with_space_mouse.py --vendor-id 9583 --product-id 50746
 
 # TODOs
-- Problem bei zwei Händen im Tracker 
-Immer nur eine Hand soll getrackt werden
-- Neue OSC control anpassen
+Logs
+configs
+Struktur
+renaming
+übersichtlichkeit
