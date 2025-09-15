@@ -79,3 +79,5 @@ configs
 Struktur
 renaming
 übersichtlichkeit
+
+Dokumentation?
