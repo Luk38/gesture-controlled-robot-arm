@@ -14,30 +14,30 @@ simulation = False # Set to False for real robot mode
 # Real robot
 if not simulation:
     # Scales for the robot's end-effector
-    X_POS_SCALE = 0.009  # Scale for robots x position
-    Y_POS_SCALE = 0.004  # Scale for robots y position
-    Z_POS_SCALE = 0.004  # Scale for robots z position
-    X_ROT_SCALE = 1  # Scale for robots x rotation
-    Y_ROT_SCALE = -1  # Scale for robots y rotation   
-    Z_ROT_SCALE = -1  # Scale for robots z rotation
-    X_OFFSET = 0.6  # x-axis offset for the robot
-    Y_OFFSET = -0.02  # y-axis offset for the robot
-    Z_OFFSET = -0.4  # z-axis offset for the robot
+    X_POS_SCALE = 0.009  
+    Y_POS_SCALE = 0.004  
+    Z_POS_SCALE = 0.004  
+    X_ROT_SCALE = 1  
+    Y_ROT_SCALE = -1   
+    Z_ROT_SCALE = -1  
+    X_OFFSET = 0.6  
+    Y_OFFSET = -0.02  
+    Z_OFFSET = -0.4  
     X_OFFSET = 30
     Y_OFFSET = 0
     Z_OFFSET = -220 
 
 # Simulation
 elif simulation:
-    X_POS_SCALE = 0.02  # Scale for robots x position
-    Y_POS_SCALE = 0.03  # Scale for robots y position
-    Z_POS_SCALE = 0.006  # Scale for robots z position
-    X_ROT_SCALE = -1  # Scale for robots x rotation
-    Y_ROT_SCALE = 1  # Scale for robots y rotation   
-    Z_ROT_SCALE = -1  # Scale for robots z rotation
-    X_OFFSET = 0  # x-axis offset for the robot
-    Y_OFFSET = 0  # y-axis offset for the robot
-    Z_OFFSET = 0  # z-axis offset for the robot
+    X_POS_SCALE = 0.02  
+    Y_POS_SCALE = 0.03  
+    Z_POS_SCALE = 0.006 
+    X_ROT_SCALE = -1  
+    Y_ROT_SCALE = 1   
+    Z_ROT_SCALE = -1 
+    X_OFFSET = 0 
+    Y_OFFSET = 0 
+    Z_OFFSET = 0 
 
     # Simulation parameters
     MAX_FR = 60 # Maximum frame rate
@@ -58,10 +58,10 @@ def get_target_pose(hand_data):
         hand_data['orientation']['z'] * Z_ROT_SCALE
     ])
     grasp = np.array([hand_data['pinch_strength']])
-    #print("target_pos_z:", target_pos[2])
     return target_pos, target_quat, grasp
 
 def osc_move(current_pose, target_pose, raw_lin):
+    """Compute the action for the robot using Operational Space Control (OSC) with linear velocity."""
     if simulation:
         target_pos, target_quat, grasp = target_pose
         current_pos, current_quat = current_pose
@@ -76,18 +76,13 @@ def osc_move(current_pose, target_pose, raw_lin):
     quat_diff = transform_utils.quat_distance(target_quat, current_quat)
     axis_angle_diff = transform_utils.quat2axisangle(quat_diff)
     action_axis_angle = axis_angle_diff.flatten()
-    # print("action_axis_angle:", action_axis_angle)
     # action_pos = np.clip(action_pos, -1, 1)
     action_axis_angle = np.clip(action_axis_angle, -0.3, 0.3)
     # gripper
-    if grasp <= 0.2:
+    if grasp <= 0.4:
         grasp = np.array([-1.0])
 
-    action_pos = raw_lin
-    #print("target_lin:", raw_lin)
-    # print("current_pos:", current_pos)
-    #print("action_pos:", action_pos, grasp)
-
+    action_pos = raw_lin.flatten()
     action_pos = np.where(np.abs(action_pos) < 0.01, 0, action_pos)
     action_axis_angle = np.where(np.abs(action_axis_angle) < 0.01, 0, action_axis_angle)
 
@@ -95,7 +90,6 @@ def osc_move(current_pose, target_pose, raw_lin):
     #action_axis_angle.tolist()
     #np.array([0.0, 0, 0]).tolist()
     action = action_pos.tolist() + action_axis_angle.tolist() + grasp.tolist()
-    #print("action:", action)
     return action
 
 def main():
@@ -138,12 +132,16 @@ def main():
                                     action=action,
                                     controller_cfg=controller_cfg,
                                     )
-            #target_pos, target_quat, grasp = target_pose
-            # print("target_pos:", target_pos)
-            # print("current_pos:", current_pose[:3, 3:])
     except KeyboardInterrupt:
         print("Program stopped by user.")
     finally:
+        # Send termination command
+        robot_interface.control(
+            controller_type=controller_type,
+            action=[0.0, 0.0, 0.0, 0.0, 0.0, 0.0] + [1.0],
+            controller_cfg=controller_cfg,
+            termination=True,
+        )
         print("Closing robot interface.")
         robot_interface.close()
 
