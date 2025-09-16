@@ -54,7 +54,8 @@ def OnFrame(frame):
     if (number_of_hands != frame.nHands):
         print("tracked hands:", frame.nHands)
         number_of_hands = frame.nHands
-    #Sende nur jedes zweite Frame
+
+    # Sende nur jedes zweite Frame / frame rate limit
     # if frame.info.frame_id % 2 != 0:
     #     return
 

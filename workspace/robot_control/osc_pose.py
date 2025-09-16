@@ -74,18 +74,16 @@ def osc_move(current_pose, target_pose):
     axis_angle_diff = transform_utils.quat2axisangle(quat_diff)
 
     action_pos = (target_pos - current_pos).flatten() 
-    print("target_pos:", target_pos)
-    print("current_pos:", current_pos)
-    print("action_pos:", action_pos)
+    # print("target_pos:", target_pos)
+    # print("current_pos:", current_pos)
+    # print("action_pos:", action_pos)
     action_axis_angle = axis_angle_diff.flatten()
     # print("action_axis_angle:", action_axis_angle)
     # action_pos = np.clip(action_pos, -1, 1)
     action_axis_angle = np.clip(action_axis_angle, -0.3, 0.3)
     print(grasp)
     # gripper
-    if grasp >= 0.8:
-        grasp = np.array([1.0])
-    else:
+    if grasp <= 0.5:
         grasp = np.array([-1.0])
 
     #action_pos.tolist()
