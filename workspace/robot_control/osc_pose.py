@@ -81,9 +81,11 @@ def osc_move(current_pose, target_pose):
     # print("action_axis_angle:", action_axis_angle)
     # action_pos = np.clip(action_pos, -1, 1)
     action_axis_angle = np.clip(action_axis_angle, -0.3, 0.3)
-
+    print(grasp)
     # gripper
-    if grasp == 0:
+    if grasp >= 0.8:
+        grasp = np.array([1.0])
+    else:
         grasp = np.array([-1.0])
 
     #action_pos.tolist()

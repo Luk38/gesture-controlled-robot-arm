@@ -46,34 +46,61 @@ def OnConnect():
 def OnConnectionLost():
     print("Connection lost")
 
+selected_hand_id = None
+number_of_hands = 0
+
 def OnFrame(frame):
-    if (frame.info.frame_id % 60 == 0):
-        print("Frame: ", frame.info.frame_id, "with ", frame.nHands)
-    #Sende nur jedes zweite Frame 
+    global selected_hand_id, number_of_hands
+    if (number_of_hands != frame.nHands):
+        print("tracked hands:", frame.nHands)
+        number_of_hands = frame.nHands
+    #Sende nur jedes zweite Frame
     # if frame.info.frame_id % 2 != 0:
     #     return
-    for h in range(frame.nHands):
-        hand = frame.pHands[0]
-        data = {
-            "id": hand.id,
-            "type": "left" if hand.type == lib.eLeapHandType_Left else "right",
-            "x": hand.palm.position.x,
-            "y": hand.palm.position.y,
-            "z": hand.palm.position.z,
-            # "velocity_x": hand.palm.velocity.x, #millimeters per second
-            # "velocity_y": hand.palm.velocity.y,
-            # "velocity_z": hand.palm.velocity.z,
-            "grab_strength": hand.grab_strength,
-            "pinch_strength": hand.pinch_strength,
-            "orientation": {
-                "x": hand.palm.orientation.x,
-                "y": hand.palm.orientation.y,
-                "z": hand.palm.orientation.z,
-                "w": hand.palm.orientation.w
-            }
-            
+
+    if frame.nHands == 0:
+        selected_hand_id = None
+        return
+
+    hands = [frame.pHands[i] for i in range(frame.nHands)]
+
+    hand = None
+
+    if selected_hand_id is not None:
+        for h in hands:
+            if h.id == selected_hand_id:
+                hand = h
+                break
+
+    if hand is None:
+        hand = hands[0]
+
+    if selected_hand_id is None:
+        selected_hand_id = hand.id
+
+    if selected_hand_id != hand.id:
+        selected_hand_id = hand.id
+
+    data = {
+        # "id": hand.id,
+        # "type": "left" if hand.type == lib.eLeapHandType_Left else "right",
+        "x": hand.palm.position.x,
+        "y": hand.palm.position.y,
+        "z": hand.palm.position.z,
+        # "velocity_x": hand.palm.velocity.x, #millimeters per second
+        # "velocity_y": hand.palm.velocity.y,
+        # "velocity_z": hand.palm.velocity.z,
+        "grab_strength": hand.grab_strength,
+        "pinch_strength": hand.pinch_strength,
+        "orientation": {
+            "x": hand.palm.orientation.x,
+            "y": hand.palm.orientation.y,
+            "z": hand.palm.orientation.z,
+            "w": hand.palm.orientation.w
         }
-        sock.sendto(json.dumps(data).encode(), target)
+        
+    }
+    sock.sendto(json.dumps(data).encode(), target)
 
 def handleConnectionEvent(connection_event):
     global IsConnected
