@@ -75,9 +75,9 @@ python gesture-controlled-robot-arm/workspace/run_deoxys_with_space_mouse.py --v
 
 # TODOs
 Logs
-configs
+configs - doch nicht
 Struktur
 renaming
 übersichtlichkeit
 
-Dokumentation?
+Für jeden scaling definieren
