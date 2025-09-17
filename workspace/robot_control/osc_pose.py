@@ -6,8 +6,6 @@ from deoxys.franka_interface import FrankaInterface
 from deoxys.utils import transform_utils
 from deoxys.utils.config_utils import get_default_controller_config
 from deoxys.experimental.motion_utils import reset_joints_to
-from hand_positions import startTracking, stopTracking
-
 
 # Simulation or real robot mode
 simulation = False # Set to False for real robot mode
@@ -90,7 +88,6 @@ def osc_move(current_pose, target_pose):
     return action
 
 def main():
-    startTracking()
     if simulation:
         env = suite.make(
             env_name="Lift",
@@ -128,7 +125,6 @@ def main():
         finally:
             print("Closing simulation environment.")
             env.close()
-            stopTracking()
 
     # Run Program on Real Robot
     elif (not simulation):
@@ -175,7 +171,6 @@ def main():
                 controller_cfg=controller_cfg,
                 termination=True,
             )
-            stopTracking()
             print("Closing robot interface.")
             robot_interface.close()
 
