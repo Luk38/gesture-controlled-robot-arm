@@ -1,7 +1,7 @@
 import numpy as np
 import time
 from receive_hand_positions import receive_hand_positions
-import robosuite as suite
+#import robosuite as suite
 from deoxys.franka_interface import FrankaInterface
 from deoxys.utils import transform_utils
 from deoxys.utils.config_utils import get_default_controller_config
@@ -76,7 +76,6 @@ def osc_move(current_pose, target_pose):
     action_axis_angle = axis_angle_diff.flatten()
     action_axis_angle = np.clip(action_axis_angle, -0.3, 0.3)
 
-    print(grasp)
     # gripper
     if grasp <= 0.4:
         grasp = np.array([-1.0])
