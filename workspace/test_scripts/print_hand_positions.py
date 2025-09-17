@@ -10,15 +10,15 @@ while True:
     hand_data = json.loads(data.decode())
 
     # Palm position
-    print(
-             "    Hand id {} is a {} hand with position ({:.2f}, {:.2f}, {:.2f})".format(
-                 hand_data["id"],
-                 hand_data["type"],
-                 hand_data["x"],
-                 hand_data["y"],
-                 hand_data["z"]
-             )
-        )
+    # print(
+    #          "    Hand id {} is a {} hand with position ({:.2f}, {:.2f}, {:.2f})".format(
+    #              hand_data["id"],
+    #              hand_data["type"],
+    #              hand_data["x"],
+    #              hand_data["y"],
+    #              hand_data["z"]
+    #          )
+    #     )
     
     # # Palm orientation
     # print(
@@ -44,11 +44,11 @@ while True:
     #         )
     # )
 
-    # Pinch strength
-    # print(" Hand id {} pinch {:.2f}".format(
-    #     hand_data["id"],
-    #     hand_data["pinch_strength"]
-    # ))
+    
+    print(" Hand id {} pinch {:.2f}".format(
+        #hand_data["id"],
+        hand_data["pinch_strength"]
+    ))
 
     # Grab strength
     # print(" Hand id {} grab {:.2f}".format(

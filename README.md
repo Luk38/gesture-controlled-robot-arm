@@ -75,9 +75,13 @@ python gesture-controlled-robot-arm/workspace/run_deoxys_with_space_mouse.py --v
 
 # TODOs
 Logs
+
 configs - doch nicht
+
 Struktur
+
 renaming
+
 übersichtlichkeit
 
 Für jeden scaling definieren
@@ -89,13 +93,22 @@ Reihenfolge Teilnehmer 1:
 2. PS4
 3. OSC with Linear Velocity
 4. Spacemouse
+
 Reihenfolge Teilnehmer 2:
 1. PS4
 2. OSC with Linear Velocity
 3. Spacemouse
 4. OSC Pose
+
 Reihenfolge Teilnehmer 3:
 1. OSC with Linear Velocity
 2. Spacemouse
 3. OSC Pose
 4. PS4
+
+### Umrechnungen mit den scalings
+Für die Leap Einheiten:
+
+https://docs.ultraleap.com/api-reference/tracking-api/leapc-guide/leap-concepts.html
+
+Für 

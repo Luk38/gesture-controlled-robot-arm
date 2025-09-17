@@ -79,7 +79,7 @@ def osc_move(current_pose, target_pose, raw_lin):
     # action_pos = np.clip(action_pos, -1, 1)
     action_axis_angle = np.clip(action_axis_angle, -0.3, 0.3)
     # gripper
-    if grasp <= 0.4:
+    if grasp == 0.0:
         grasp = np.array([-1.0])
 
     action_pos = raw_lin.flatten()
