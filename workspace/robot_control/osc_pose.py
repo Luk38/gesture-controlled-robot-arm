@@ -1,7 +1,7 @@
 import numpy as np
 import time
 from receive_hand_positions import receive_hand_positions
-#import robosuite as suite
+import robosuite as suite
 from deoxys.franka_interface import FrankaInterface
 from deoxys.utils import transform_utils
 from deoxys.utils.config_utils import get_default_controller_config
