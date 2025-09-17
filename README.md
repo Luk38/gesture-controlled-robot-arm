@@ -81,3 +81,21 @@ renaming
 übersichtlichkeit
 
 Für jeden scaling definieren
+
+## Notizen für die Arbeit
+
+Reihenfolge Teilnehmer 1:
+1. OSC Pose
+2. PS4
+3. OSC with Linear Velocity
+4. Spacemouse
+Reihenfolge Teilnehmer 2:
+1. PS4
+2. OSC with Linear Velocity
+3. Spacemouse
+4. OSC Pose
+Reihenfolge Teilnehmer 3:
+1. OSC with Linear Velocity
+2. Spacemouse
+3. OSC Pose
+4. PS4
