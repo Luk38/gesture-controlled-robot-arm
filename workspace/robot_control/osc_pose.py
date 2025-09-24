@@ -21,7 +21,7 @@ if not simulation:
     Z_ROT_SCALE = -1  
     X_OFFSET = 0.6  
     Y_OFFSET = -0.02  
-    Z_OFFSET = -0.5  
+    Z_OFFSET = -0.55  
 
 # Simulation
 elif simulation:
@@ -77,8 +77,8 @@ def osc_move(current_pose, target_pose):
     action_axis_angle = np.clip(action_axis_angle, -0.3, 0.3)
 
     # gripper
-    #print(grasp)
-    if grasp <= 0.6:
+    # print(grasp)
+    if grasp <= 0.15:
         grasp = np.array([-1.0])
 
     #action_pos.tolist()

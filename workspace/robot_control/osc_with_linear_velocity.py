@@ -20,9 +20,9 @@ if not simulation:
     X_ROT_SCALE = 1  
     Y_ROT_SCALE = -1   
     Z_ROT_SCALE = -1  
-    X_OFFSET = 0.6  
-    Y_OFFSET = -0.02  
-    Z_OFFSET = -0.4  
+    # X_OFFSET = 0.6  
+    # Y_OFFSET = -0.02  
+    # Z_OFFSET = -0.4  
     X_OFFSET = 30
     Y_OFFSET = 0
     Z_OFFSET = -220 
