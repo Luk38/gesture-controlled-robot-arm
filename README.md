@@ -71,7 +71,7 @@ docker exec -it 1900ac99c53f /bin/bash
 ### Deoxys with Spacemouse
 
 python examples/run_deoxys_with_space_mouse.py --vendor-id 9583 --product-id 50746
-python gesture-controlled-robot-arm/workspace/run_deoxys_with_space_mouse.py --vendor-id 9583 --product-id 50746
+python gesture-controlled-robot-arm/other_controls/run_deoxys_with_space_mouse.py --vendor-id 9583 --product-id 50746
 
 # TODOs
 Logs
@@ -105,6 +105,18 @@ Reihenfolge Teilnehmer 3:
 2. Spacemouse
 3. OSC Pose
 4. PS4
+
+Reihenfolge Teilnehmer 4:
+1. Spacemouse
+2. OSC Pose
+3. PS4
+4. OSC with Linear Velocity
+
+Reihenfolge Teilnehmer 5:
+1. OSC Pose
+2. PS4
+3. OSC with Linear Velocity
+4. Spacemouse
 
 ### Umrechnungen mit den scalings
 Für die Leap Einheiten:
