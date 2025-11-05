@@ -74,7 +74,7 @@ docker exec -it id /bin/bash
 
 ### Deoxys with Spacemouse
 
-python examples/run_deoxys_with_space_mouse.py --vendor-id 9583 --product-id 50746
-python gesture-controlled-robot-arm/other_controls/run_deoxys_with_space_mouse.py --vendor-id 9583 --product-id 50746
+python examples/run_deoxys_with_space_mouse.py --vendor-id id --product-id id
+python gesture-controlled-robot-arm/other_controls/run_deoxys_with_space_mouse.py --vendor-id id --product-id id
 
 
