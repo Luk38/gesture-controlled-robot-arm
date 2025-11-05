@@ -69,21 +69,17 @@ def osc_move(current_pose, target_pose):
         current_quat = transform_utils.mat2quat(current_rot)
     if np.dot(target_quat, current_quat) < 0.0:
         current_quat = -current_quat
-    quat_diff = transform_utils.quat_distance(target_quat, current_quat)
-    axis_angle_diff = transform_utils.quat2axisangle(quat_diff)
+    quat_diff = transform_utils.quat_distance(target_quat, current_quat)    # quaternion distance
+    axis_angle_diff = transform_utils.quat2axisangle(quat_diff) # rotation difference for action
 
-    action_pos = (target_pos - current_pos).flatten() 
+    action_pos = (target_pos - current_pos).flatten()   # position difference for action
     action_axis_angle = axis_angle_diff.flatten()
     action_axis_angle = np.clip(action_axis_angle, -0.3, 0.3)
 
-    # gripper
-    # print(grasp)
-    if grasp <= 0.15:
+    # gripper action
+    if grasp == 0.0:
         grasp = np.array([-1.0])
 
-    #action_pos.tolist()
-    #action_axis_angle.tolist()
-    #np.array([0.0, 0, 0]).tolist()
     action = action_pos.tolist() + action_axis_angle.tolist() + grasp.tolist()
     return action
 
@@ -111,9 +107,9 @@ def main():
                 current_pos = obs["robot0_eef_pos"]
                 current_quat = obs["robot0_eef_quat"]
 
+                # get next action
                 action = osc_move((current_pos, current_quat), target_pose)
-
-                obs, reward, done, info = env.step(action)
+                obs, reward, done, info = env.step(action) # control command
                 env.render()
 
                 elapsed = time.time() - start
@@ -128,11 +124,13 @@ def main():
 
     # Run Program on Real Robot
     elif (not simulation):
+        # robot interface
         robot_interface = FrankaInterface("config/charmander.yml"
                                           , use_visualizer=False)
         controller_type = "OSC_POSE"
         controller_cfg = get_default_controller_config(controller_type)
 
+        # reset to starting position
         reset_joint_positions = [
         0.09162008114028396,
         -0.19826458111314524,
@@ -142,8 +140,8 @@ def main():
         2.30396583422025,
         0.8480939705504309,
         ]
-
         reset_joints_to(robot_interface, reset_joint_positions)
+
         try:
             while True:
                 # current pose
@@ -151,11 +149,12 @@ def main():
                 # Hand tracking data              
                 hand_data = receive_hand_positions()
                 target_pose = get_target_pose(hand_data)
-                if hand_data['grab_strength'] > 0.8:
+                if hand_data['grab_strength'] > 0.8:    # Stop control when grabbing
                     action = [0.0, 0, 0, 0, 0, 0] + [-1]
                 else:
-                    action = osc_move(current_pose, target_pose)
+                    action = osc_move(current_pose, target_pose)    # next action
 
+                # control command
                 robot_interface.control(controller_type=controller_type,
                                         action=action,
                                         controller_cfg=controller_cfg,

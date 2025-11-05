@@ -1,4 +1,5 @@
 # gesture-controlled-robot-arm
+control schemes found in /workspace
 
 ## Docker
 
@@ -13,6 +14,8 @@
 removed after stopping:
 
     docker run -it --rm -v /cshome:/cshome -e DISPLAY=$DISPLAY -v /tmp/.X11-unix:/tmp/.X11-unix --net=host --privileged deoxys
+
+install Leap-tracking-service in container
 
 ## Panda
 
@@ -51,76 +54,27 @@ hand tracking programm for the leap motion controller:
 
 osc pose control for the robot:
 
-    python gesture-controlled-robot-arm/workspace/robot_control/osc_pose.py 
+    python gesture-controlled-robot-arm/workspace/robot_control/osc_pose.py
+
+second control scheme:
+
+    python gesture-controlled-robot-arm/workspace/robot_control/osc_with_linear_velocity.py
 
 
 ## Notizen
-### Für LeapC import
+### For LeapC import
 
 import sys
 
 sys.path.append("/usr/lib/ultraleap-hand-tracking-service")
 
-### Terminal im Container
+### Terminal in Container
 
-#### neu
-docker exec -it aa43ef451ae3 /bin/bash 
-
-docker exec -it 1900ac99c53f /bin/bash
+docker exec -it id /bin/bash
 
 ### Deoxys with Spacemouse
 
 python examples/run_deoxys_with_space_mouse.py --vendor-id 9583 --product-id 50746
 python gesture-controlled-robot-arm/other_controls/run_deoxys_with_space_mouse.py --vendor-id 9583 --product-id 50746
 
-# TODOs
-Logs
 
-configs - doch nicht
-
-Struktur
-
-renaming
-
-übersichtlichkeit
-
-Für jeden scaling definieren
-
-## Notizen für die Arbeit
-
-Reihenfolge Teilnehmer 1:
-1. OSC Pose
-2. PS4
-3. OSC with Linear Velocity
-4. Spacemouse
-
-Reihenfolge Teilnehmer 2:
-1. PS4
-2. OSC with Linear Velocity
-3. Spacemouse
-4. OSC Pose
-
-Reihenfolge Teilnehmer 3:
-1. OSC with Linear Velocity
-2. Spacemouse
-3. OSC Pose
-4. PS4
-
-Reihenfolge Teilnehmer 4:
-1. Spacemouse
-2. OSC Pose
-3. PS4
-4. OSC with Linear Velocity
-
-Reihenfolge Teilnehmer 5:
-1. OSC Pose
-2. PS4
-3. OSC with Linear Velocity
-4. Spacemouse
-
-### Umrechnungen mit den scalings
-Für die Leap Einheiten:
-
-https://docs.ultraleap.com/api-reference/tracking-api/leapc-guide/leap-concepts.html
-
-Für 
