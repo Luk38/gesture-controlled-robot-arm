@@ -108,7 +108,10 @@ def main():
                 current_quat = obs["robot0_eef_quat"]
 
                 # get next action
-                action = osc_move((current_pos, current_quat), target_pose)
+                if hand_data['grab_strength'] > 0.8:    # stop control when grabbing
+                    action = [0.0, 0, 0, 0, 0, 0] + [-1]
+                else:
+                    action = osc_move((current_pos, current_quat), target_pose)
                 obs, reward, done, info = env.step(action) # control command
                 env.render()
 
@@ -130,7 +133,7 @@ def main():
         controller_type = "OSC_POSE"
         controller_cfg = get_default_controller_config(controller_type)
 
-        # reset to starting position
+        # reset robot to initial position
         reset_joint_positions = [
         0.09162008114028396,
         -0.19826458111314524,
@@ -149,11 +152,10 @@ def main():
                 # Hand tracking data              
                 hand_data = receive_hand_positions()
                 target_pose = get_target_pose(hand_data)
-                if hand_data['grab_strength'] > 0.8:    # Stop control when grabbing
+                if hand_data['grab_strength'] > 0.8:    # stop control when grabbing
                     action = [0.0, 0, 0, 0, 0, 0] + [-1]
                 else:
                     action = osc_move(current_pose, target_pose)    # next action
-
                 # control command
                 robot_interface.control(controller_type=controller_type,
                                         action=action,
