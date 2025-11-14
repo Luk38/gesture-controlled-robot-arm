@@ -103,7 +103,7 @@ def main():
                 # Hand tracking data (immer das neueste Paket)
                 hand_data = receive_hand_positions()
                 target_pose = get_target_pose(hand_data)
-                scale_lin = 0.005
+                scale_lin = 0.05
                 raw_lin = np.array([
                     scale_lin * (hand_data['z'] + X_OFFSET),
                     scale_lin * (hand_data['x'] + Y_OFFSET),
